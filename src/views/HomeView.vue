@@ -6,8 +6,7 @@
     <WhyUs />
     <FeaturesSection />
     <HowWorks />
-    <Features />
-    <Contact />
+    <ContactSection />
     <LandingFooter />
   </div>
 </template>
@@ -17,8 +16,7 @@ import LandingNavbar from '@/components/landing/LandingNavbar.vue'
 import HeroSection from '@/components/landing/HeroSection.vue'
 import FeaturesSection from '@/components/landing/FeaturesSection.vue'
 import WhyUs from '@/components/landing/WhyUs.vue'
-import Features from '@/components/landing/Features.vue'
-import Contact from '@/components/landing/Contact.vue'
+import ContactSection from '@/components/landing/ContactSection.vue'
 import HowWorks from '@/components/landing/HowWorks.vue'
 import LandingFooter from '@/components/landing/LandingFooter.vue'
 </script>
