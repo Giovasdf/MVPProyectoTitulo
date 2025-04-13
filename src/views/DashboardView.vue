@@ -11,13 +11,19 @@
       >
         <div class="content-container">
           <PedidosPendientes v-if="currentSection === 'dashboard'" />
+
           <div v-if="currentSection === 'medicamentos'">
             <h2>Sección Medicamentos</h2>
             <p>Aquí iría el contenido de medicamentos.</p>
           </div>
+
           <div v-if="currentSection === 'ventas'">
             <h2>Sección Ventas</h2>
             <p>Aquí iría el contenido de ventas.</p>
+          </div>
+
+          <div v-if="currentSection === 'configuracion'">
+            <QrConfig />
           </div>
         </div>
       </div>
@@ -30,24 +36,26 @@ import { defineComponent, ref } from 'vue'
 import NavBar from '../components/dashboard/NavBar.vue'
 import SideBar from '../components/dashboard/SideBar.vue'
 import PedidosPendientes from '../components/dashboard/PedidosPendientes.vue'
+import QrConfig from '../components/dashboard/QrConfig.vue'
 
 export default defineComponent({
   name: 'HomeView',
   components: {
     NavBar,
     SideBar,
-    PedidosPendientes
+    PedidosPendientes,
+    QrConfig
   },
   setup() {
     const sidebarVisible = ref(true)
-    const currentSection = ref<'dashboard' | 'medicamentos' | 'ventas'>('dashboard')
+    const currentSection = ref<'dashboard' | 'medicamentos' | 'ventas' | 'configuracion'>('dashboard')
 
     const toggleSidebar = () => {
       sidebarVisible.value = !sidebarVisible.value
     }
 
     const setSection = (section: string) => {
-      currentSection.value = section as any
+      currentSection.value = section as typeof currentSection.value
     }
 
     return {
@@ -73,7 +81,6 @@ export default defineComponent({
   width: 100%;
 }
 
-/* Contenedor principal del contenido */
 .main-content {
   margin-left: 250px;
   padding: 1rem;

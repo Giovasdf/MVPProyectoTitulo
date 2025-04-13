@@ -2,9 +2,10 @@
   <h1>Pedidos Pendientes</h1>
   <div class="pedidos-container">
     <div class="pedidos-header">
-      <span class="badge">{{ pedidos.length }} Pedidos pendientes</span>
-    </div>
-
+  <span class="badge estado-pendiente">{{ pendientes.length }} Pendientes</span>
+  <span class="badge estado-procesando">{{ procesando.length }} Procesando</span>
+  <span class="badge estado-completado">{{ completados.length }} Completados</span>
+</div>
     <div class="pedidos-list">
       <div v-for="pedido in pedidos" :key="pedido.id" class="pedido-card">
         <div class="pedido-info">
@@ -12,61 +13,75 @@
           <span class="pedido-cliente">{{ pedido.cliente }}</span>
           <span class="pedido-fecha">{{ formatFecha(pedido.fecha) }}</span>
         </div>
-        <div class="pedido-estado" :class="'estado-' + pedido.estado.toLowerCase()">
+        <div class="pedido-estado estado-pendiente">
           {{ pedido.estado }}
         </div>
         <div class="pedido-acciones">
-          <button class="btn-detalle" @click="verDetalle(pedido.id)">
-  <i class="fas fa-eye"></i>
-  <span class="btn-text">Ver</span>
-</button>
-
+          <button class="btn-detalle" @click="abrirDetalle(pedido)">
+            <i class="fas fa-eye"></i>
+            <span class="btn-text">Ver</span>
+          </button>
+          <button class="btn-detalle" @click="abrirCambioEstado(pedido)">
+            <i class="fas fa-sync-alt"></i>
+            <span class="btn-text">Cambiar estado</span>
+          </button>
         </div>
       </div>
     </div>
   </div>
+
+  <PedidoDetalleModal
+    v-if="modalDetalleVisible"
+    :pedido="detalleSeleccionado"
+    @cerrar="modalDetalleVisible = false"
+  />
+
+  <CambiarEstadoModal
+    v-if="modalEstadoVisible && pedidoEditando"
+    :pedido-id="pedidoEditando.id"
+    :estado-actual="pedidoEditando.estado"
+    @cerrar="modalEstadoVisible = false"
+    @estadoActualizado="actualizarEstado"
+  />
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import PocketBase, { RecordModel } from 'pocketbase'
+import PedidoDetalleModal from './PedidoDetalleModal.vue'
+import CambiarEstadoModal from './CambiarEstadoModal.vue'
 
-interface Pedido {
-  id: number
-  cliente: string
-  fecha: string
-  estado: 'PENDIENTE' | 'PROCESANDO' | 'COMPLETADO'
-  productos: number
-  total: number
+const pb = new PocketBase('http://127.0.0.1:8090')
+
+interface Producto {
+  producto: string
+  cantidad: number
+  dosis: string
+  requiereReceta: boolean
 }
 
-const pedidos = ref<Pedido[]>([
-  {
-    id: 1001,
-    cliente: 'Clínica San Juan',
-    fecha: '2023-05-15T10:30:00',
-    estado: 'PENDIENTE',
-    productos: 5,
-    total: 125000
-  },
-  {
-    id: 1002,
-    cliente: 'Hospital Central',
-    fecha: '2023-05-14T16:45:00',
-    estado: 'PENDIENTE',
-    productos: 3,
-    total: 87500
-  },
-  {
-    id: 1003,
-    cliente: 'Farmacia Luz',
-    fecha: '2023-05-14T09:15:00',
-    estado: 'PENDIENTE',
-    productos: 8,
-    total: 215000
-  }
-])
+interface Pedido {
+  id: string
+  cliente: string
+  fecha: string
+  items: Producto[]
+  estado: string
+}
 
-const formatFecha = (fecha: string) => {
+// Estados
+const pedidos = ref<Pedido[]>([])
+const modalDetalleVisible = ref(false)
+const modalEstadoVisible = ref(false)
+const detalleSeleccionado = ref<Pedido | null>(null)
+const pedidoEditando = ref<Pedido | null>(null)
+
+// Computed
+const pendientes = computed(() => pedidos.value.filter((p) => p.estado === 'PENDIENTE'))
+const procesando = computed(() => pedidos.value.filter((p) => p.estado === 'PROCESANDO'))
+const completados = computed(() => pedidos.value.filter((p) => p.estado === 'COMPLETADO'))
+
+// Métodos
+const formatFecha = (fecha: string): string => {
   return new Date(fecha).toLocaleDateString('es-CL', {
     day: '2-digit',
     month: '2-digit',
@@ -74,10 +89,93 @@ const formatFecha = (fecha: string) => {
   })
 }
 
-const verDetalle = (id: number) => {
-  console.log('Ver detalle del pedido:', id)
-  // Aquí podrías navegar a una ruta de detalle o abrir un modal
+const abrirDetalle = (pedido: Pedido) => {
+  detalleSeleccionado.value = pedido
+  modalDetalleVisible.value = true
 }
+
+const abrirCambioEstado = (pedido: Pedido) => {
+  pedidoEditando.value = pedido
+  modalEstadoVisible.value = true
+}
+
+const actualizarEstado = (nuevoEstado: string) => {
+  if (!pedidoEditando.value) return
+  const index = pedidos.value.findIndex(p => p.id === pedidoEditando.value?.id)
+  if (index !== -1) {
+    pedidos.value[index].estado = nuevoEstado
+  }
+}
+
+// Función para mapear los datos del pedido
+const mapPedidoData = (record: RecordModel): Pedido => {
+  const items: Producto[] = Array.isArray(record.items)
+    ? record.items
+    : JSON.parse(record.items || '[]')
+
+  return {
+    id: record.id,
+    cliente: record.name,
+    fecha: record.created,
+    items,
+    estado: record.estado || 'PENDIENTE'
+  }
+}
+
+// Cargar pedidos iniciales
+const fetchPedidos = async () => {
+  try {
+    const result = await pb.collection('orders').getFullList({
+      sort: '-created'
+    })
+    pedidos.value = result.map(mapPedidoData)
+  } catch (error) {
+    console.error('❌ Error al cargar pedidos:', error)
+  }
+}
+
+// Configurar realtime
+const setupRealtime = () => {
+  pb.collection('orders').subscribe('*', function (e) {
+    console.log('Evento realtime:', e.action, e.record)
+    
+    const mappedPedido = mapPedidoData(e.record)
+    const index = pedidos.value.findIndex(p => p.id === mappedPedido.id)
+
+    switch (e.action) {
+      case 'create':
+        pedidos.value.unshift(mappedPedido)
+        break
+      case 'update':
+        if (index !== -1) {
+          pedidos.value.splice(index, 1, mappedPedido)
+        } else {
+          pedidos.value.unshift(mappedPedido)
+        }
+        break
+      case 'delete':
+        if (index !== -1) {
+          pedidos.value.splice(index, 1)
+        }
+        break
+    }
+  })
+}
+
+// Limpiar suscripción
+const cleanupRealtime = () => {
+  pb.collection('orders').unsubscribe('*')
+}
+
+// Ciclo de vida
+onMounted(async () => {
+  await fetchPedidos()
+  setupRealtime()
+})
+
+onBeforeUnmount(() => {
+  cleanupRealtime()
+})
 </script>
 
 <style scoped>
@@ -170,8 +268,17 @@ const verDetalle = (id: number) => {
 }
 
 .estado-pendiente {
-  background: #fff4e6;
-  color: #e67e22;
+  background: #e67e22;
+  color: #fff4e6;
+}
+
+.estado-procesando {
+  background: #3498db;
+  color: #e6f7ff;
+}
+.estado-completado {
+  background: #2ecc71;
+  color: #e6ffe6;
 }
 
 .pedido-acciones {
@@ -199,7 +306,62 @@ const verDetalle = (id: number) => {
 .btn-detalle i {
   font-size: 0.9rem;
 }
-/* Añade estos estilos para responsividad */
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-cerrar,
+.btn-guardar {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-cerrar {
+  background: #ccc;
+  color: #333;
+}
+
+.btn-guardar {
+  background: #6F7D54;
+  color: white;
+  margin-right: 0.5rem;
+}
+
+.select-estado {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 1rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+/* Responsividad */
 @media (max-width: 992px) {
   .pedido-card {
     flex-direction: column;
@@ -245,21 +407,5 @@ const verDetalle = (id: number) => {
   .btn-detalle i {
     margin: 0;
   }
-  .btn-detalle .btn-text {
-  display: none;
-}
-
-.btn-detalle {
-  padding: 0.5rem;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  justify-content: center;
-}
-
-.btn-detalle i {
-  margin: 0;
-}
-
 }
 </style>

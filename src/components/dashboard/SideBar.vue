@@ -12,6 +12,7 @@
             <span class="tooltip-text">Dashboard</span>
           </span>
         </a>
+
         <a class="menu-item" @click="select('medicamentos')">
           <span class="menu-icon">
             <i class="fas fa-pills"></i>
@@ -21,6 +22,7 @@
             <span class="tooltip-text">Medicamentos</span>
           </span>
         </a>
+
         <a class="menu-item" @click="select('ventas')">
           <span class="menu-icon">
             <i class="fas fa-shopping-cart"></i>
@@ -28,6 +30,16 @@
           <span class="menu-text" v-if="visible">Ventas</span>
           <span class="menu-tooltip" v-if="!visible">
             <span class="tooltip-text">Ventas</span>
+          </span>
+        </a>
+
+        <a class="menu-item" @click="select('configuracion')">
+          <span class="menu-icon">
+            <i class="fas fa-cog"></i>
+          </span>
+          <span class="menu-text" v-if="visible">Configuración</span>
+          <span class="menu-tooltip" v-if="!visible">
+            <span class="tooltip-text">Configuración</span>
           </span>
         </a>
       </nav>
@@ -115,11 +127,7 @@ const select = (section: string) => {
   font-size: 0.95rem;
 }
 
-/* Estilos cuando está oculto */
-.sidebar-hidden .menu-text {
-  display: none;
-}
-
+.sidebar-hidden .menu-text,
 .sidebar-hidden .menu-header {
   display: none;
 }
@@ -129,7 +137,6 @@ const select = (section: string) => {
   padding: 0.75rem 0;
 }
 
-/* Tooltip circular */
 .menu-tooltip {
   position: absolute;
   left: 100%;
@@ -160,8 +167,6 @@ const select = (section: string) => {
   left: -5px;
   top: 50%;
   transform: translateY(-50%);
-  width: 0;
-  height: 0;
   border-top: 5px solid transparent;
   border-bottom: 5px solid transparent;
   border-right: 5px solid #6F7D54;
@@ -173,7 +178,6 @@ const select = (section: string) => {
   margin-left: 15px;
 }
 
-/* Botón circular al hover */
 .sidebar-hidden .menu-item:hover .menu-icon {
   background-color: #6F7D54;
   width: 40px;
