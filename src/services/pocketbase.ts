@@ -1,7 +1,7 @@
 import PocketBase from 'pocketbase'
 
 const PB_URL = 'http://127.0.0.1:8090'
-const pb = new PocketBase(PB_URL)
+export const pb = new PocketBase(PB_URL)
 
 // Función para login de usuarios normales (no admin)
 export async function loginUser(email, password) {

@@ -12,7 +12,7 @@
       <div class="menu-header" v-if="visible || isMobile">Menú</div>
       <nav class="menu-nav">
         <button
-          v-for="item in items"
+          v-for="item in filteredItems"
           :key="item.section"
           class="menu-item"
           :class="{ active: current === item.section }"
@@ -42,7 +42,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth'
 
@@ -58,12 +58,49 @@ const current = ref(props.currentSection);
 const authStore = useAuthStore();
 
 const items = [
-  { section: 'dashboard', label: 'Dashboard', icon: 'fas fa-chart-line' },
-  { section: 'pedidos', label: 'Pedidos', icon: 'fas fa-notes-medical' },
-  { section: 'sucursales', label: 'Sucursales', icon: 'fas fa-store-alt' },
-  { section: 'usuarios', label: 'Usuarios', icon: 'fas fa-users-cog' },
-  { section: 'configuracion', label: 'Configuración', icon: 'fas fa-cog' },
+  { 
+    section: 'dashboard', 
+    label: 'Dashboard', 
+    icon: 'fas fa-chart-line',
+    requiresAdmin: false
+  },
+  { 
+    section: 'pedidos', 
+    label: 'Pedidos', 
+    icon: 'fas fa-notes-medical',
+    requiresAdmin: false
+  },
+  { 
+    section: 'sucursales', 
+    label: 'Sucursales', 
+    icon: 'fas fa-store-alt',
+    requiresAdmin: true
+  },
+  { 
+    section: 'usuarios', 
+    label: 'Usuarios', 
+    icon: 'fas fa-users-cog',
+    requiresAdmin: true
+  },
+  { 
+    section: 'configuracion', 
+    label: 'Configuración', 
+    icon: 'fas fa-cog',
+    requiresAdmin: true
+  },
 ];
+
+// Filtra los elementos del menú según el rol del usuario
+const filteredItems = computed(() => {
+  return items.filter(item => {
+    // Si el elemento requiere privilegios de admin, verificar el rol del usuario
+    if (item.requiresAdmin) {
+      return authStore.RolUsuario === 'admin';
+    }
+    // Si no requiere privilegios de admin, mostrar siempre
+    return true;
+  });
+});
 
 const checkScreenSize = () => {
   isMobile.value = window.innerWidth < 768;
@@ -86,10 +123,6 @@ const select = (section: string) => {
   current.value = section;
   emit('update:currentSection', section);
   if (isMobile.value) closeSidebar();
-};
-
-const logout = () => {
-  router.push('/login');
 };
 
 const closeSidebar = () => {
