@@ -1,191 +1,156 @@
 <template>
-  <div class="sidebar" :class="{ 'sidebar-hidden': !visible }">
+  <div
+    class="sidebar"
+    :class="{
+      'sidebar-collapsed': !visible && !isMobile,
+      'sidebar-hidden': isMobile && !visible
+    }"
+    role="navigation"
+    aria-label="Menú de navegación"
+  >
     <div class="sidebar-menu">
-      <div class="menu-header" v-if="visible">Menú</div>
+      <div class="menu-header" v-if="visible || isMobile">Menú</div>
       <nav class="menu-nav">
-        <a class="menu-item" @click="select('dashboard')">
-          <span class="menu-icon">
-            <i class="fas fa-chart-line"></i>
-          </span>
-          <span class="menu-text" v-if="visible">Dashboard</span>
-          <span class="menu-tooltip" v-if="!visible">
-            <span class="tooltip-text">Dashboard</span>
-          </span>
-        </a>
-
-        <a class="menu-item" @click="select('medicamentos')">
-          <span class="menu-icon">
-            <i class="fas fa-pills"></i>
-          </span>
-          <span class="menu-text" v-if="visible">Medicamentos</span>
-          <span class="menu-tooltip" v-if="!visible">
-            <span class="tooltip-text">Medicamentos</span>
-          </span>
-        </a>
-
-        <a class="menu-item" @click="select('ventas')">
-          <span class="menu-icon">
-            <i class="fas fa-shopping-cart"></i>
-          </span>
-          <span class="menu-text" v-if="visible">Ventas</span>
-          <span class="menu-tooltip" v-if="!visible">
-            <span class="tooltip-text">Ventas</span>
-          </span>
-        </a>
-
-        <a class="menu-item" @click="select('configuracion')">
-          <span class="menu-icon">
-            <i class="fas fa-cog"></i>
-          </span>
-          <span class="menu-text" v-if="visible">Configuración</span>
-          <span class="menu-tooltip" v-if="!visible">
-            <span class="tooltip-text">Configuración</span>
-          </span>
-        </a>
+        <button
+          v-for="item in items"
+          :key="item.section"
+          class="menu-item"
+          :class="{ active: current === item.section }"
+          @click="select(item.section)"
+          :aria-label="item.label"
+        >
+          <i :class="item.icon" class="menu-icon"></i>
+          <span class="menu-text" v-show="visible">{{ item.label }}</span>
+          <span class="menu-tooltip" v-if="!visible">{{ item.label }}</span>
+        </button>
+        <button
+          class="menu-item logout-item"
+          @click="handleLogout"
+          aria-label="Cerrar sesión"
+        >
+          <i class="fas fa-sign-out-alt menu-icon"></i>
+          <span class="menu-text" v-show="visible">Cerrar sesión</span>
+          <span class="menu-tooltip" v-if="!visible">Cerrar sesión</span>
+        </button>
       </nav>
+       
     </div>
   </div>
+
+  <!-- Overlay para móviles -->
+  <div class="sidebar-overlay" v-if="isMobile && visible" @click="closeSidebar"></div>
 </template>
 
 <script lang="ts" setup>
-defineProps<{ visible: boolean }>()
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth'
 
+const props = defineProps<{ visible: boolean; currentSection: string }>();
 const emit = defineEmits<{
-  (e: 'select-section', section: string): void
-}>()
+  (e: 'update:visible', val: boolean): void;
+  (e: 'update:currentSection', section: string): void;
+}>();
+
+const router = useRouter();
+const isMobile = ref(window.innerWidth < 768);
+const current = ref(props.currentSection);
+const authStore = useAuthStore();
+
+const items = [
+  { section: 'dashboard', label: 'Dashboard', icon: 'fas fa-chart-line' },
+  { section: 'pedidos', label: 'Pedidos', icon: 'fas fa-notes-medical' },
+  { section: 'sucursales', label: 'Sucursales', icon: 'fas fa-store-alt' },
+  { section: 'usuarios', label: 'Usuarios', icon: 'fas fa-users-cog' },
+  { section: 'configuracion', label: 'Configuración', icon: 'fas fa-cog' },
+];
+
+const checkScreenSize = () => {
+  isMobile.value = window.innerWidth < 768;
+  if (isMobile.value) {
+    emit('update:visible', false);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('resize', checkScreenSize);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkScreenSize);
+});
+
+watch(() => props.currentSection, v => (current.value = v));
 
 const select = (section: string) => {
-  emit('select-section', section)
-}
+  current.value = section;
+  emit('update:currentSection', section);
+  if (isMobile.value) closeSidebar();
+};
+
+const logout = () => {
+  router.push('/login');
+};
+
+const closeSidebar = () => {
+  emit('update:visible', false);
+};
+
+const handleLogout = async () => {
+  try {
+    authStore.logout();
+    router.push('/login');
+    if (isMobile.value) closeSidebar();
+  } catch (error) {
+    console.error('Error al cerrar sesión:', error);
+  }
+};
 </script>
 
 <style scoped>
 .sidebar {
-  width: 250px;
-  height: 100vh;
-  background-color: #2B6EFD;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid #e6e6e6;
   position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 90;
-  transition: all 0.3s ease;
+  top: 0; left: 0;
+  height: 100vh;
+  background: #0d6efd;
+  color: #fff;
   padding-top: 60px;
-  overflow: hidden;
+  transition: width 0.3s, transform 0.3s;
+  z-index: 1000;
+}
+.sidebar-collapsed { width: 70px; }
+.sidebar:not(.sidebar-collapsed) { width: 250px; }
+.sidebar-hidden { transform: translateX(-100%); }
+
+.sidebar-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 900;
 }
 
-.sidebar-hidden {
-  width: 70px;
-}
+.sidebar-menu { display: flex; flex-direction: column; height: 100%; padding: 1rem; }
+.menu-header { font-weight: bold; margin-bottom: 1rem; }
 
-.sidebar-menu {
-  padding: 1rem;
-}
-
-.menu-header {
-  font-weight: 600;
-  font-size: 1rem;
-  color: #eeeded;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #eeeded;
-}
-
-.menu-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
+.menu-nav { flex-grow: 1; display: flex; flex-direction: column; gap: 0.5rem; }
 .menu-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  text-decoration: none;
-  color: #eeeded;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-  position: relative;
-  cursor: pointer;
+  display: flex; align-items: center;
+  background: none; border: none; width: 100%;
+  padding: 0.75rem; border-radius: 4px; cursor: pointer;
+  position: relative; color: #fff; text-align: left;
+  transition: background 0.2s;
 }
+.menu-item:hover { background: rgba(255,255,255,0.1); }
+.menu-item.active { background: rgba(255,255,255,0.3); }
 
-.menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.menu-icon {
-  margin-right: 0.75rem;
-  font-size: 1.25rem;
-  width: 24px;
-  display: flex;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.menu-text {
-  font-size: 0.95rem;
-}
-
-.sidebar-hidden .menu-text,
-.sidebar-hidden .menu-header {
-  display: none;
-}
-
-.sidebar-hidden .menu-item {
-  justify-content: center;
-  padding: 0.75rem 0;
-}
+.menu-icon { width: 24px; text-align: center; margin-right: 0.75rem; }
+.menu-text { white-space: nowrap; }
+.logout-container { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 1rem; }
+.logout-item:hover { background: rgba(255,0,0,0.2); }
 
 .menu-tooltip {
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-left: 10px;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  z-index: 100;
+  position: absolute; left: 100%; top: 50%;
+  transform: translateY(-50%); background: #333; color: #fff;
+  padding: 0.5rem; border-radius: 4px; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s; margin-left: 8px;
 }
-
-.menu-tooltip .tooltip-text {
-  background-color: #6F7D54;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 20px;
-  white-space: nowrap;
-  font-size: 0.85rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-}
-
-.menu-tooltip .tooltip-text::before {
-  content: '';
-  position: absolute;
-  left: -5px;
-  top: 50%;
-  transform: translateY(-50%);
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-right: 5px solid #6F7D54;
-}
-
-.sidebar-hidden .menu-item:hover .menu-tooltip {
-  opacity: 1;
-  visibility: visible;
-  margin-left: 15px;
-}
-
-.sidebar-hidden .menu-item:hover .menu-icon {
-  background-color: #6F7D54;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  align-items: center;
-  justify-content: center;
-  margin-right: 0;
-  color: white;
-}
+.menu-item:hover .menu-tooltip { opacity: 1; }
 </style>

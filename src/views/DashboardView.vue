@@ -1,106 +1,89 @@
 <template>
-  <div class="home-view">
+  <div class="dashboard-view">
     <NavBar @toggle-sidebar="toggleSidebar" />
 
-    <div class="main-layout">
-      <SideBar :visible="sidebarVisible" @select-section="setSection" />
+    <SideBar
+      v-model:visible="sidebarVisible"
+      v-model:currentSection="currentSection"
+    />
 
-      <div
-        class="main-content"
-        :class="{ 'content-expanded': !sidebarVisible }"
-      >
-        <div class="content-container">
-          <PedidosPendientes v-if="currentSection === 'dashboard'" />
-
-          <div v-if="currentSection === 'medicamentos'">
-            <h2>Sección Medicamentos</h2>
-            <p>Aquí iría el contenido de medicamentos.</p>
-          </div>
-
-          <div v-if="currentSection === 'ventas'">
-            <h2>Sección Ventas</h2>
-            <p>Aquí iría el contenido de ventas.</p>
-          </div>
-
-          <div v-if="currentSection === 'configuracion'">
-            <QrConfig />
-          </div>
-        </div>
+    <div
+      class="main-content"
+      :class="{ 'collapsed': !sidebarVisible && !isMobile }"
+    >
+      <div class="content-container">
+        <component :is="currentComponent" />
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
-import NavBar from '../components/dashboard/NavBar.vue'
-import SideBar from '../components/dashboard/SideBar.vue'
-import PedidosPendientes from '../components/dashboard/PedidosPendientes.vue'
-import QrConfig from '../components/dashboard/QrConfig.vue'
+import { defineComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import NavBar from '../components/dashboard/NavBar.vue';
+import SideBar from '../components/dashboard/SideBar.vue';
+import Dashboard from '../components/dashboard/Dashboard.vue';
+import PedidosPendientes from '../components/dashboard/PedidosPendientes.vue';
+import SucursalesAdmin from '../components/dashboard/SucursalesAdmin.vue';
+import UsuariosAdmin from '../components/dashboard/UsuariosAdmin.vue';
+import QrConfig from '../components/dashboard/QrConfig.vue';
 
 export default defineComponent({
-  name: 'HomeView',
-  components: {
-    NavBar,
-    SideBar,
-    PedidosPendientes,
-    QrConfig
-  },
+  name: 'DashboardView',
+  components: { NavBar, SideBar },
   setup() {
-    const sidebarVisible = ref(true)
-    const currentSection = ref<'dashboard' | 'medicamentos' | 'ventas' | 'configuracion'>('dashboard')
+    const sidebarVisible = ref(true);
+    const currentSection = ref('dashboard');
+    const isMobile = ref(window.innerWidth < 768);
+
+    const checkScreen = () => {
+      isMobile.value = window.innerWidth < 768;
+      if (isMobile.value) sidebarVisible.value = false;
+      else sidebarVisible.value = true;
+    };
+
+    onMounted(() => {
+      window.addEventListener('resize', checkScreen);
+      checkScreen();
+    });
+    onBeforeUnmount(() => window.removeEventListener('resize', checkScreen));
 
     const toggleSidebar = () => {
-      sidebarVisible.value = !sidebarVisible.value
-    }
+      sidebarVisible.value = !sidebarVisible.value;
+    };
 
-    const setSection = (section: string) => {
-      currentSection.value = section as typeof currentSection.value
-    }
+    const currentComponent = computed(() => {
+      switch (currentSection.value) {
+        case 'pedidos': return PedidosPendientes;
+        case 'sucursales': return SucursalesAdmin;
+        case 'usuarios': return UsuariosAdmin;
+        case 'configuracion': return QrConfig;
+        default: return Dashboard;
+      }
+    });
 
-    return {
-      sidebarVisible,
-      toggleSidebar,
-      currentSection,
-      setSection
-    }
-  }
-})
+    return { sidebarVisible, currentSection, toggleSidebar, isMobile, currentComponent };
+  },
+});
 </script>
 
 <style scoped>
-.home-view {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.main-layout {
-  display: flex;
-  flex: 1;
-  width: 100%;
-}
-
+.dashboard-view { display: flex; flex-direction: column; min-height: 100vh; }
 .main-content {
+  margin-top: 60px;
   margin-left: 250px;
   padding: 1rem;
-  transition: all 0.3s ease;
-  background-color: #f5f7fa;
-  width: calc(100% - 250px);
-  min-height: 100vh;
+  transition: margin-left 0.3s;
 }
-
-.content-expanded {
-  margin-left: 70px;
-  width: calc(100% - 70px);
-}
-
+.main-content.collapsed { margin-left: 70px; }
 .content-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1.5rem;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  max-width: 1200px; margin: 0 auto;
+  padding: 1.5rem; background: #fff;
+  border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+  .main-content { margin-left: 0; padding: 0.5rem; }
+  .content-container { padding: 1rem; border-radius: 0; }
 }
 </style>

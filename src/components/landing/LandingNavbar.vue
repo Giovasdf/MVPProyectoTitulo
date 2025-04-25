@@ -119,7 +119,8 @@ const mobileLink = (id: string) => {
 }
 
 .navbar-links li a:hover {
-  color: #6F7D54;
+  color: #143479;
+  text-decoration: underline;
 }
 
 /* Botón login Desktop */

@@ -3,9 +3,10 @@ import PocketBase from 'pocketbase'
 const PB_URL = 'http://127.0.0.1:8090'
 const pb = new PocketBase(PB_URL)
 
-export async function loginAdmin() {
+// Función para login de usuarios normales (no admin)
+export async function loginUser(email, password) {
   try {
-    await pb.admins.authWithPassword('gmolina.dev@gmail.com', 'anyand21.')
+    const authData = await pb.collection('users').authWithPassword(email, password)
     return pb
   } catch (err) {
     console.error('Error de autenticación:', err)
@@ -13,9 +14,26 @@ export async function loginAdmin() {
   }
 }
 
+
+
+// Verificar estado de autenticación
+export function isLoggedIn() {
+  return pb.authStore.isValid
+}
+
+// Obtener usuario actual
+export function currentUser() {
+  return pb.authStore.model
+}
+
+// Cerrar sesión
+export function logout() {
+  pb.authStore.clear()
+}
+
+// Resto de tus funciones (getPedidos, updatePedidoStatus, etc.)
 export async function getPedidos() {
   try {
-    const pb = await loginAdmin()
     const records = await pb.collection('orders').getFullList({
       sort: '-created',
     })
@@ -28,7 +46,6 @@ export async function getPedidos() {
 
 export async function updatePedidoStatus(id, status) {
   try {
-    const pb = await loginAdmin()
     const record = await pb.collection('orders').update(id, { status })
     return record
   } catch (err) {
@@ -36,3 +53,5 @@ export async function updatePedidoStatus(id, status) {
     throw err
   }
 }
+
+export default pb
