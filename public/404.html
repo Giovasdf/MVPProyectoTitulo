@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <title>Redireccionando...</title>
     <script>
-      // Extrae la parte después del dominio (pathname completo)
-      const pathname = location.pathname.replace(/^\/MVPProyectoTitulo/, '');
+      // Reemplaza correctamente la ruta base sin agregar barras adicionales
+      const pathname = location.pathname.replace(/^\/MVPProyectoTitulo\/?/, ''); // Asegurarse de que no haya barras extra
       location.replace('/MVPProyectoTitulo/' + pathname + location.search + location.hash);
     </script>
   </head>
