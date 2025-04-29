@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <title>Redireccionando...</title>
-    <meta http-equiv="refresh" content="0; url=/MVPProyectoTitulo/" />
     <script>
-      // Redirección manual (fallback si <meta> no funciona)
-      location.replace("/MVPProyectoTitulo/");
+      // Extrae la parte después del dominio (pathname completo)
+      const pathname = location.pathname.replace(/^\/MVPProyectoTitulo/, '');
+      location.replace('/MVPProyectoTitulo/' + pathname + location.search + location.hash);
     </script>
   </head>
   <body>
-    <p>Redireccionando a la aplicación...</p>
+    <p>Redireccionando...</p>
   </body>
 </html>
