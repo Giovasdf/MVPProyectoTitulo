@@ -153,7 +153,7 @@ const fetchPedidos = async () => {
     })
 
     // Mapeamos los registros a tipo Pedido
-    pedidos.value = await Promise.all(result.map((record: RecordPedido) => mapPedidoData(record)))
+    pedidos.value = await Promise.all(result.map((record: RecordModel) => mapPedidoData(record as RecordPedido))) // Conversión explícita aquí
   } catch (error) {
     console.error('❌ Error al cargar pedidos:', error)
   }
@@ -167,7 +167,7 @@ const setupRealtime = () => {
     if (e.record.sucursal_id !== authStore.sucursalId) return
 
     console.log('📦 Realtime evento:', e.action, e.record)
-    const nuevoPedido = await mapPedidoData(e.record as RecordPedido)
+    const nuevoPedido = await mapPedidoData(e.record as RecordPedido)  // Conversión explícita aquí
     const index = pedidos.value.findIndex(p => p.id === nuevoPedido.id)
 
     switch (e.action) {
@@ -199,8 +199,6 @@ onBeforeUnmount(() => {
   cleanupRealtime()
 })
 </script>
-
-
 
 
 <style scoped>
