@@ -1,0 +1,45 @@
+{
+  "_vue-67McKtzl.js": {
+    "file": "assets/vue-67McKtzl.js",
+    "name": "vue"
+  },
+  "index.html": {
+    "file": "assets/main-BYGe4fAv.js",
+    "name": "main",
+    "src": "index.html",
+    "isEntry": true,
+    "imports": [
+      "_vue-67McKtzl.js"
+    ],
+    "css": [
+      "assets/main-5PPHynDp.css"
+    ],
+    "assets": [
+      "assets/LogoMediBot2-C9PZj44Q.png",
+      "assets/LogoMediBot-Du84vOzi.png",
+      "assets/hero-CWuAooEN.jpg",
+      "assets/ia-HeiQ-n2g.jpg",
+      "assets/contact-DoOLmjsY.jpg"
+    ]
+  },
+  "src/assets/img/LogoMediBot.png": {
+    "file": "assets/LogoMediBot-Du84vOzi.png",
+    "src": "src/assets/img/LogoMediBot.png"
+  },
+  "src/assets/img/LogoMediBot2.png": {
+    "file": "assets/LogoMediBot2-C9PZj44Q.png",
+    "src": "src/assets/img/LogoMediBot2.png"
+  },
+  "src/assets/img/contact.jpg": {
+    "file": "assets/contact-DoOLmjsY.jpg",
+    "src": "src/assets/img/contact.jpg"
+  },
+  "src/assets/img/hero.jpg": {
+    "file": "assets/hero-CWuAooEN.jpg",
+    "src": "src/assets/img/hero.jpg"
+  },
+  "src/assets/img/ia.jpg": {
+    "file": "assets/ia-HeiQ-n2g.jpg",
+    "src": "src/assets/img/ia.jpg"
+  }
+}
