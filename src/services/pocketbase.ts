@@ -3,17 +3,30 @@ import PocketBase from 'pocketbase'
 const PB_URL = 'http://127.0.0.1:8090'
 export const pb = new PocketBase(PB_URL)
 
-// Función para login de usuarios normales (no admin)
-export async function loginUser(email, password) {
+// Tipos para TypeScript
+export interface User {
+  id: string
+  email: string
+  nombre?: string
+  rol?: string
+  sucursal_id?: string
+  [key: string]: any
+}
+
+// Función para login con expansión de sucursal_id si es necesario
+export async function loginUser(email: string, password: string) {
   try {
-    const authData = await pb.collection('users').authWithPassword(email, password)
-    return pb
+    const authData = await pb.collection('users').authWithPassword(
+      email, 
+      password,
+      { expand: 'sucursal_id' } // Opcional: expandir la relación
+    )
+    return authData
   } catch (err) {
     console.error('Error de autenticación:', err)
     throw err
   }
 }
-
 
 
 // Verificar estado de autenticación

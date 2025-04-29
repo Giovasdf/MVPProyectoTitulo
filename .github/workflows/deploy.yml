@@ -1,0 +1,45 @@
+name: Deploy Vue 3 App to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛎️ Checkout del código
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: 📦 Instalar dependencias
+        run: npm install
+
+      - name: 🚀 Construir la aplicación
+        run: |
+          npm run build
+
+          if [ ! -d "dist" ]; then
+            echo "❌ ERROR: La carpeta dist/ no se generó correctamente."
+            exit 1
+          fi
+
+          echo "✅ Build completado. Contenido de dist/:"
+          ls -R dist/
+
+      - name: 🚢 Desplegar en GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: dist
+          clean: true

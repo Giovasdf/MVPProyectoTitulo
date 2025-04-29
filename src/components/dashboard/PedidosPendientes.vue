@@ -47,17 +47,17 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
-import PocketBase, { RecordModel } from 'pocketbase'
+import PocketBase from 'pocketbase'
 import PedidoDetalleModal from './PedidoDetalleModal.vue'
 import CambiarEstadoModal from './CambiarEstadoModal.vue'
 
 const pb = new PocketBase('http://127.0.0.1:8090')
 
 interface Producto {
-  producto: string
+  nombre_producto: string
   cantidad: number
   dosis: string
-  requiereReceta: boolean
+  observaciones: string
 }
 
 interface Pedido {
@@ -75,19 +75,17 @@ const modalEstadoVisible = ref(false)
 const detalleSeleccionado = ref<Pedido | null>(null)
 const pedidoEditando = ref<Pedido | null>(null)
 
-// Computed
-const pendientes = computed(() => pedidos.value.filter((p) => p.estado === 'PENDIENTE'))
-const procesando = computed(() => pedidos.value.filter((p) => p.estado === 'PROCESANDO'))
-const completados = computed(() => pedidos.value.filter((p) => p.estado === 'COMPLETADO'))
+// Computeds
+const pendientes = computed(() => pedidos.value.filter(p => p.estado === 'pendiente'))
+const procesando = computed(() => pedidos.value.filter(p => p.estado === 'preparado'))
+const completados = computed(() => pedidos.value.filter(p => p.estado === 'entregado'))
 
-// Métodos
-const formatFecha = (fecha: string): string => {
-  return new Date(fecha).toLocaleDateString('es-CL', {
+const formatFecha = (fecha: string): string =>
+  new Date(fecha).toLocaleDateString('es-CL', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   })
-}
 
 const abrirDetalle = (pedido: Pedido) => {
   detalleSeleccionado.value = pedido
@@ -102,72 +100,72 @@ const abrirCambioEstado = (pedido: Pedido) => {
 const actualizarEstado = (nuevoEstado: string) => {
   if (!pedidoEditando.value) return
   const index = pedidos.value.findIndex(p => p.id === pedidoEditando.value?.id)
-  if (index !== -1) {
-    pedidos.value[index].estado = nuevoEstado
-  }
+  if (index !== -1) pedidos.value[index].estado = nuevoEstado
 }
 
 // Función para mapear los datos del pedido
-const mapPedidoData = (record: RecordModel): Pedido => {
-  const items: Producto[] = Array.isArray(record.items)
-    ? record.items
-    : JSON.parse(record.items || '[]')
+const mapPedidoData = async (record: any): Promise<Pedido> => {
+  const productos = await pb.collection('productos_pedido').getFullList({
+    filter: `pedido_id="${record.id}"`
+  })
+
+  const items: Producto[] = productos.map((prod: any) => ({
+    nombre_producto: prod.nombre_producto,
+    cantidad: prod.cantidad,
+    dosis: prod.dosis,
+    observaciones: prod.observaciones
+  }))
 
   return {
     id: record.id,
-    cliente: record.name,
+    cliente: record.nombre_cliente,
     fecha: record.created,
     items,
-    estado: record.estado || 'PENDIENTE'
+    estado: record.estado || 'pendiente'
   }
 }
 
 // Cargar pedidos iniciales
 const fetchPedidos = async () => {
   try {
-    const result = await pb.collection('orders').getFullList({
+    const result = await pb.collection('pedidos').getFullList({
       sort: '-created'
     })
-    pedidos.value = result.map(mapPedidoData)
+
+    const pedidosConItems = await Promise.all(result.map(mapPedidoData))
+    pedidos.value = pedidosConItems
   } catch (error) {
     console.error('❌ Error al cargar pedidos:', error)
   }
 }
 
-// Configurar realtime
+// Realtime
 const setupRealtime = () => {
-  pb.collection('orders').subscribe('*', function (e) {
-    console.log('Evento realtime:', e.action, e.record)
-    
-    const mappedPedido = mapPedidoData(e.record)
-    const index = pedidos.value.findIndex(p => p.id === mappedPedido.id)
+  pb.collection('pedidos').subscribe('*', async (e) => {
+    console.log('📦 Realtime evento:', e.action, e.record)
+
+    const nuevoPedido = await mapPedidoData(e.record)
+    const index = pedidos.value.findIndex(p => p.id === nuevoPedido.id)
 
     switch (e.action) {
       case 'create':
-        pedidos.value.unshift(mappedPedido)
+        pedidos.value.unshift(nuevoPedido)
         break
       case 'update':
-        if (index !== -1) {
-          pedidos.value.splice(index, 1, mappedPedido)
-        } else {
-          pedidos.value.unshift(mappedPedido)
-        }
+        if (index !== -1) pedidos.value.splice(index, 1, nuevoPedido)
+        else pedidos.value.unshift(nuevoPedido)
         break
       case 'delete':
-        if (index !== -1) {
-          pedidos.value.splice(index, 1)
-        }
+        if (index !== -1) pedidos.value.splice(index, 1)
         break
     }
   })
 }
 
-// Limpiar suscripción
 const cleanupRealtime = () => {
-  pb.collection('orders').unsubscribe('*')
+  pb.collection('pedidos').unsubscribe('*')
 }
 
-// Ciclo de vida
 onMounted(async () => {
   await fetchPedidos()
   setupRealtime()
