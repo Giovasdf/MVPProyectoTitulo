@@ -58,10 +58,11 @@ const authStore = useAuthStore()
 
 // Definimos un tipo para el producto
 interface Producto {
-  nombre_producto: string
-  cantidad: number
-  dosis: string
-  observaciones: string
+  producto: string      // Nombre del producto
+  cantidad: number      // Cantidad
+  dosis: string         // Dosis
+  observaciones: string // Observaciones
+  requiereReceta: boolean // Indicador si requiere receta
 }
 
 // Definimos el tipo para el pedido
@@ -80,7 +81,7 @@ interface RecordPedido extends RecordModel {
   created: string
   estado?: string
   sucursal_id: string
-  // Añadir otras propiedades necesarias del registro
+  // Otras propiedades que puedas necesitar de PocketBase
 }
 
 // Estados y UI
@@ -125,10 +126,11 @@ const mapPedidoData = async (record: RecordPedido): Promise<Pedido> => {
   })
 
   const items: Producto[] = productos.map((prod: RecordModel) => ({
-    nombre_producto: prod['nombre_producto'],
+    producto: prod['nombre_producto'],      // Asegurarse de que el campo correcto esté siendo utilizado
     cantidad: prod['cantidad'],
     dosis: prod['dosis'],
-    observaciones: prod['observaciones']
+    observaciones: prod['observaciones'],
+    requiereReceta: prod['requiereReceta'] ?? false // Asegurarnos de que la propiedad existe
   }))
 
   return {
