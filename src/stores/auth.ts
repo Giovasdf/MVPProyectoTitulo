@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { loginUser, logout as logoutService, isLoggedIn, currentUser, type User } from '@/services/pocketbase'
 
-// Extiende la interfaz User de PocketBase con campos adicionales
 interface AuthUser extends User {
   rol?: string
   sucursal_id?: string
@@ -95,8 +94,5 @@ export const useAuthStore = defineStore('auth', {
     }
   },
 
-  persist: {
-    key: 'auth-store',
-    paths: ['user', 'isAuthenticated', 'RolUsuario', 'sucursalId']
-  }
+  persist: true // Ahora solo debes colocar persist: true si estás usando el plugin
 })

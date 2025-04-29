@@ -2,10 +2,10 @@
   <h1>Pedidos Pendientes</h1>
   <div class="pedidos-container">
     <div class="pedidos-header">
-  <span class="badge estado-pendiente">{{ pendientes.length }} Pendientes</span>
-  <span class="badge estado-procesando">{{ procesando.length }} Procesando</span>
-  <span class="badge estado-completado">{{ completados.length }} Completados</span>
-</div>
+      <span class="badge estado-pendiente">{{ pendientes.length }} Pendientes</span>
+      <span class="badge estado-procesando">{{ procesando.length }} Procesando</span>
+      <span class="badge estado-completado">{{ completados.length }} Completados</span>
+    </div>
     <div class="pedidos-list">
       <div v-for="pedido in pedidos" :key="pedido.id" class="pedido-card">
         <div class="pedido-info">
@@ -48,6 +48,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import PocketBase from 'pocketbase'
+import type { RecordModel } from 'pocketbase'  // Importación de tipo solo para RecordModel
 import PedidoDetalleModal from './PedidoDetalleModal.vue'
 import CambiarEstadoModal from './CambiarEstadoModal.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -55,6 +56,7 @@ import { useAuthStore } from '@/stores/auth'
 const pb = new PocketBase('http://127.0.0.1:8090')
 const authStore = useAuthStore()
 
+// Definimos un tipo para el producto
 interface Producto {
   nombre_producto: string
   cantidad: number
@@ -62,12 +64,23 @@ interface Producto {
   observaciones: string
 }
 
+// Definimos el tipo para el pedido
 interface Pedido {
   id: string
   cliente: string
   fecha: string
   items: Producto[]
   estado: string
+}
+
+// Definimos el tipo para el registro que obtenemos de PocketBase
+interface RecordPedido extends RecordModel {
+  id: string
+  nombre_cliente: string
+  created: string
+  estado?: string
+  sucursal_id: string
+  // Añadir otras propiedades necesarias del registro
 }
 
 // Estados y UI
@@ -106,16 +119,16 @@ const actualizarEstado = (nuevoEstado: string) => {
 }
 
 // Mapea un pedido con sus productos
-const mapPedidoData = async (record: any): Promise<Pedido> => {
+const mapPedidoData = async (record: RecordPedido): Promise<Pedido> => {
   const productos = await pb.collection('productos_pedido').getFullList({
     filter: `pedido_id="${record.id}"`
   })
 
-  const items: Producto[] = productos.map((prod: any) => ({
-    nombre_producto: prod.nombre_producto,
-    cantidad: prod.cantidad,
-    dosis: prod.dosis,
-    observaciones: prod.observaciones
+  const items: Producto[] = productos.map((prod: RecordModel) => ({
+    nombre_producto: prod['nombre_producto'],
+    cantidad: prod['cantidad'],
+    dosis: prod['dosis'],
+    observaciones: prod['observaciones']
   }))
 
   return {
@@ -127,6 +140,7 @@ const mapPedidoData = async (record: any): Promise<Pedido> => {
   }
 }
 
+// Carga los pedidos de PocketBase
 const fetchPedidos = async () => {
   try {
     if (!authStore.sucursalId) return
@@ -136,7 +150,8 @@ const fetchPedidos = async () => {
       filter: `sucursal_id="${authStore.sucursalId}"`
     })
 
-    pedidos.value = await Promise.all(result.map(mapPedidoData))
+    // Mapeamos los registros a tipo Pedido
+    pedidos.value = await Promise.all(result.map((record: RecordPedido) => mapPedidoData(record)))
   } catch (error) {
     console.error('❌ Error al cargar pedidos:', error)
   }
@@ -150,7 +165,7 @@ const setupRealtime = () => {
     if (e.record.sucursal_id !== authStore.sucursalId) return
 
     console.log('📦 Realtime evento:', e.action, e.record)
-    const nuevoPedido = await mapPedidoData(e.record)
+    const nuevoPedido = await mapPedidoData(e.record as RecordPedido)
     const index = pedidos.value.findIndex(p => p.id === nuevoPedido.id)
 
     switch (e.action) {
@@ -182,6 +197,8 @@ onBeforeUnmount(() => {
   cleanupRealtime()
 })
 </script>
+
+
 
 
 <style scoped>
@@ -282,6 +299,7 @@ onBeforeUnmount(() => {
   background: #3498db;
   color: #e6f7ff;
 }
+
 .estado-completado {
   background: #2ecc71;
   color: #e6ffe6;
@@ -331,87 +349,8 @@ onBeforeUnmount(() => {
   background: white;
   padding: 2rem;
   border-radius: 8px;
-  width: 90%;
-  max-width: 400px;
-  text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-
-.btn-cerrar,
-.btn-guardar {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-cerrar {
-  background: #ccc;
-  color: #333;
-}
-
-.btn-guardar {
-  background: #6F7D54;
-  color: white;
-  margin-right: 0.5rem;
-}
-
-.select-estado {
-  width: 100%;
-  padding: 0.5rem;
-  margin-top: 1rem;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
-}
-
-/* Responsividad */
-@media (max-width: 992px) {
-  .pedido-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .pedido-estado {
-    margin: 0;
-    align-self: flex-start;
-  }
-
-  .pedido-acciones {
-    align-self: flex-end;
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-
-@media (max-width: 576px) {
-  .pedidos-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .pedido-info {
-    width: 100%;
-  }
-
-  .btn-detalle .btn-text {
-    display: none;
-  }
-
-  .btn-detalle {
-    padding: 0.5rem;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    justify-content: center;
-  }
-
-  .btn-detalle i {
-    margin: 0;
-  }
+  width: 40%;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 </style>
