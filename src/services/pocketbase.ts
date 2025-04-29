@@ -46,7 +46,7 @@ export function logout(): void {
 // Obtener lista de pedidos
 export async function getPedidos() {
   try {
-    const records = await pb.collection('orders').getFullList({
+    const records = await pb.collection('pedidos').getFullList({
       sort: '-created',
     })
     return records
@@ -59,7 +59,7 @@ export async function getPedidos() {
 // Actualizar estado de un pedido
 export async function updatePedidoStatus(id: string, status: string) {
   try {
-    const record = await pb.collection('orders').update(id, { status })
+    const record = await pb.collection('pedidos').update(id, { status })
     return record
   } catch (err) {
     console.error('Error al actualizar pedido:', err)
