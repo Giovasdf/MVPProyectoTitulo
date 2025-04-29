@@ -32,7 +32,11 @@
         <li><a href="#features-section" @click.prevent="mobileLink('features-section')">Ventajas</a></li>
         <li><a href="#how-works" @click.prevent="mobileLink('how-works')">¿Cómo funciona?</a></li>
         <li><a href="#contact" @click.prevent="mobileLink('contact')">Contacto</a></li>
-        <li><a href="/login" class="mobile-login" @click="toggleMobileMenu">Iniciar sesión</a></li>
+        <li>
+          <router-link :to="{ name: 'login' }" class="mobile-login" @click="toggleMobileMenu">
+            Iniciar sesión
+          </router-link>
+        </li>
       </ul>
     </div>
   </nav>
@@ -230,6 +234,7 @@ const mobileLink = (id: string) => {
 .desktop {
   display: flex;
 }
+
 .mobile {
   display: none;
 }
@@ -238,6 +243,7 @@ const mobileLink = (id: string) => {
   .desktop {
     display: none;
   }
+
   .mobile {
     display: block;
   }
