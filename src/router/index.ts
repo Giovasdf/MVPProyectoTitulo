@@ -3,49 +3,39 @@ import HomeView from '../views/HomeView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import LoginSection from '@/components/landing/loginSection.vue'
 
-const base = import.meta.env.MODE === 'production' 
-  ? '/MVPProyectoTitulo/' 
-  : '/'
-
 const router = createRouter({
-  history: createWebHistory(base),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
       name: 'home',
       component: HomeView,
-      meta: { public: true }
-    },
-    {
-      path: '/login',
-      name: 'login',
-      component: LoginSection,
-      meta: { public: true }
+      meta: { public: true } // Ruta pública
     },
     {
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true } // Ruta protegida
     },
-    // Redirección catch-all para 404
     {
-      path: '/:pathMatch(.*)*',
-      redirect: '/'
-    }
-  ]
+      path: '/login',
+      name: 'login',
+      component: LoginSection,
+      meta: { public: true } // Ruta pública
+    },
+  ],
 })
 
-router.beforeEach(async (to) => {
+// Guard de navegación
+router.beforeEach(async (to, from, next) => {
   const authStore = (await import('@/stores/auth')).useAuthStore()
-  await authStore.checkAuth()
+  await authStore.checkAuth() // Verifica el estado de autenticación
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return { name: 'login', query: { redirect: to.fullPath } }
-  }
-
-  if (to.name === 'login' && authStore.isAuthenticated) {
-    return { name: 'dashboard' }
+    next('/login') // Redirige a login si no está autenticado
+  } else {
+    next() // Continúa la navegación
   }
 })
 
