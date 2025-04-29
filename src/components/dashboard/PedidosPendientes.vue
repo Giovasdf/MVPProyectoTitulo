@@ -53,7 +53,7 @@ import PedidoDetalleModal from './PedidoDetalleModal.vue'
 import CambiarEstadoModal from './CambiarEstadoModal.vue'
 import { useAuthStore } from '@/stores/auth'
 
-const pb = new PocketBase('http://127.0.0.1:8090')
+const pb = new PocketBase('https://database-mvp-production.up.railway.app')
 const authStore = useAuthStore()
 
 // Definimos un tipo para el producto

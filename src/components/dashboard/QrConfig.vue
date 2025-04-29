@@ -47,7 +47,7 @@ import { ref, onMounted, computed } from 'vue'
 import PocketBase from 'pocketbase'
 import { useAuthStore } from '@/stores/auth'
 
-const pb = new PocketBase('http://127.0.0.1:8090')
+const pb = new PocketBase('https://database-mvp-production.up.railway.app')
 const authStore = useAuthStore()
 
 const qrUrl = ref('')
