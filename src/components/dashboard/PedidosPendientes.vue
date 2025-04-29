@@ -13,7 +13,7 @@
           <span class="pedido-cliente">{{ pedido.cliente }}</span>
           <span class="pedido-fecha">{{ formatFecha(pedido.fecha) }}</span>
         </div>
-        <div class="pedido-estado estado-pendiente">
+        <div class="pedido-estado" :class="`estado-${pedido.estado}`">
           {{ pedido.estado }}
         </div>
         <div class="pedido-acciones">
@@ -30,25 +30,16 @@
     </div>
   </div>
 
-  <PedidoDetalleModal
-    v-if="modalDetalleVisible"
-    :pedido="detalleSeleccionado"
-    @cerrar="modalDetalleVisible = false"
-  />
+  <PedidoDetalleModal v-if="modalDetalleVisible" :pedido="detalleSeleccionado" @cerrar="modalDetalleVisible = false" />
 
-  <CambiarEstadoModal
-    v-if="modalEstadoVisible && pedidoEditando"
-    :pedido-id="pedidoEditando.id"
-    :estado-actual="pedidoEditando.estado"
-    @cerrar="modalEstadoVisible = false"
-    @estadoActualizado="actualizarEstado"
-  />
+  <CambiarEstadoModal v-if="modalEstadoVisible && pedidoEditando" :pedido-id="pedidoEditando.id"
+    :estado-actual="pedidoEditando.estado" @cerrar="modalEstadoVisible = false" @estadoActualizado="actualizarEstado" />
 </template>
 
 <script lang="ts" setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import PocketBase from 'pocketbase'
-import type { RecordModel } from 'pocketbase'  // Importación de tipo solo para RecordModel
+import type { RecordModel } from 'pocketbase'
 import PedidoDetalleModal from './PedidoDetalleModal.vue'
 import CambiarEstadoModal from './CambiarEstadoModal.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -56,16 +47,14 @@ import { useAuthStore } from '@/stores/auth'
 const pb = new PocketBase('https://database-mvp-production.up.railway.app')
 const authStore = useAuthStore()
 
-// Definimos un tipo para el producto
 interface Producto {
-  producto: string      // Nombre del producto
-  cantidad: number      // Cantidad
-  dosis: string         // Dosis
-  observaciones: string // Observaciones
-  requiereReceta: boolean // Indicador si requiere receta
+  producto: string
+  cantidad: number
+  dosis: string
+  observaciones: string
+  requiereReceta: boolean
 }
 
-// Definimos el tipo para el pedido
 interface Pedido {
   id: string
   cliente: string
@@ -74,24 +63,20 @@ interface Pedido {
   estado: string
 }
 
-// Definimos el tipo para el registro que obtenemos de PocketBase
 interface RecordPedido extends RecordModel {
   id: string
   nombre_cliente: string
   created: string
   estado?: string
   sucursal_id: string
-  // Otras propiedades que puedas necesitar de PocketBase
 }
 
-// Estados y UI
 const pedidos = ref<Pedido[]>([])
 const modalDetalleVisible = ref(false)
 const modalEstadoVisible = ref(false)
 const detalleSeleccionado = ref<Pedido | null>(null)
 const pedidoEditando = ref<Pedido | null>(null)
 
-// Computeds
 const pendientes = computed(() => pedidos.value.filter(p => p.estado === 'pendiente'))
 const procesando = computed(() => pedidos.value.filter(p => p.estado === 'preparado'))
 const completados = computed(() => pedidos.value.filter(p => p.estado === 'entregado'))
@@ -119,68 +104,95 @@ const actualizarEstado = (nuevoEstado: string) => {
   if (index !== -1) pedidos.value[index].estado = nuevoEstado
 }
 
-// Mapea un pedido con sus productos
 const mapPedidoData = async (record: RecordPedido): Promise<Pedido> => {
-  const productos = await pb.collection('productos_pedido').getFullList({
-    filter: `pedido_id="${record.id}"`
-  })
+  try {
+    const productos = await pb.collection('productos_pedido').getFullList({
+      filter: `pedido_id="${record.id}"`,
+      requestKey: `productos_${record.id}` // Clave única para cada solicitud
+    })
 
-  const items: Producto[] = productos.map((prod: RecordModel) => ({
-    producto: prod['nombre_producto'],      // Asegurarse de que el campo correcto esté siendo utilizado
-    cantidad: prod['cantidad'],
-    dosis: prod['dosis'],
-    observaciones: prod['observaciones'],
-    requiereReceta: prod['requiereReceta'] ?? false // Asegurarnos de que la propiedad existe
-  }))
+    const items: Producto[] = productos.map((prod: RecordModel) => ({
+      producto: prod['nombre_producto'],
+      cantidad: prod['cantidad'],
+      dosis: prod['dosis'],
+      observaciones: prod['observaciones'],
+      requiereReceta: prod['requiereReceta'] ?? false
+    }))
 
-  return {
-    id: record.id,
-    cliente: record.nombre_cliente,
-    fecha: record.created,
-    items,
-    estado: record.estado || 'pendiente'
+    return {
+      id: record.id,
+      cliente: record.nombre_cliente,
+      fecha: record.created,
+      items,
+      estado: record.estado || 'pendiente'
+    }
+  } catch (error) {
+    console.error(`Error al mapear pedido ${record.id}:`, error)
+    return {
+      id: record.id,
+      cliente: record.nombre_cliente,
+      fecha: record.created,
+      items: [],
+      estado: record.estado || 'pendiente'
+    }
   }
 }
 
-// Carga los pedidos de PocketBase
 const fetchPedidos = async () => {
   try {
-    if (!authStore.sucursalId) return
+    const sucursalId = authStore.user?.sucursal_id
+    if (!sucursalId) return
 
     const result = await pb.collection('pedidos').getFullList({
       sort: '-created',
-      filter: `sucursal_id="${authStore.sucursalId}"`
-    })
-
-    // Mapeamos los registros a tipo Pedido
-    pedidos.value = await Promise.all(result.map((record: RecordModel) => mapPedidoData(record as RecordPedido))) // Conversión explícita aquí
+      expand: 'sucursal_id',
+    });
+    
+    console.log('📦 Pedidos cargados:', result)
+    
+    // Procesar los pedidos en serie para evitar problemas de concurrencia
+    const pedidosProcesados: Pedido[] = []
+    for (const record of result) {
+      try {
+        const pedido = await mapPedidoData(record as RecordPedido)
+        pedidosProcesados.push(pedido)
+      } catch (error) {
+        console.error(`Error procesando pedido ${record.id}:`, error)
+      }
+    }
+    
+    pedidos.value = pedidosProcesados
   } catch (error) {
     console.error('❌ Error al cargar pedidos:', error)
   }
 }
 
-// Realtime
 const setupRealtime = () => {
-  if (!authStore.sucursalId) return
+  const sucursalId = authStore.user?.sucursal_id
+  if (!sucursalId) return
 
   pb.collection('pedidos').subscribe('*', async (e) => {
-    if (e.record.sucursal_id !== authStore.sucursalId) return
+    if (e.record.sucursal_id !== sucursalId) return
 
     console.log('📦 Realtime evento:', e.action, e.record)
-    const nuevoPedido = await mapPedidoData(e.record as RecordPedido)  // Conversión explícita aquí
-    const index = pedidos.value.findIndex(p => p.id === nuevoPedido.id)
+    try {
+      const nuevoPedido = await mapPedidoData(e.record as RecordPedido)
+      const index = pedidos.value.findIndex(p => p.id === nuevoPedido.id)
 
-    switch (e.action) {
-      case 'create':
-        pedidos.value.unshift(nuevoPedido)
-        break
-      case 'update':
-        if (index !== -1) pedidos.value.splice(index, 1, nuevoPedido)
-        else pedidos.value.unshift(nuevoPedido)
-        break
-      case 'delete':
-        if (index !== -1) pedidos.value.splice(index, 1)
-        break
+      switch (e.action) {
+        case 'create':
+          pedidos.value.unshift(nuevoPedido)
+          break
+        case 'update':
+          if (index !== -1) pedidos.value.splice(index, 1, nuevoPedido)
+          else pedidos.value.unshift(nuevoPedido)
+          break
+        case 'delete':
+          if (index !== -1) pedidos.value.splice(index, 1)
+          break
+      }
+    } catch (error) {
+      console.error('Error procesando evento realtime:', error)
     }
   })
 }
@@ -199,7 +211,6 @@ onBeforeUnmount(() => {
   cleanupRealtime()
 })
 </script>
-
 
 <style scoped>
 .text-header {
