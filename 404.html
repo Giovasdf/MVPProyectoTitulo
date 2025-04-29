@@ -4,26 +4,31 @@
     <meta charset="utf-8">
     <title>Redireccionando...</title>
     <script>
+      // Verificar si estamos en la ruta correcta
       const repoName = 'MVPProyectoTitulo';
       const currentPath = window.location.pathname;
       
-      // Verificar si ya está en la ruta correcta
-      if (!currentPath.startsWith(`/${repoName}/`)) {
-        const newPath = currentPath.startsWith('/') 
-          ? `/${repoName}${currentPath}`
-          : `/${repoName}/${currentPath}`;
+      if (!currentPath.includes(repoName)) {
+        // Construir nueva URL
+        const newPath = `/${repoName}${currentPath.startsWith('/') ? '' : '/'}${currentPath}`;
+        const newUrl = new URL(newPath, window.location.origin);
         
-        // Mantener query params y hash
-        const redirectUrl = new URL(newPath, window.location.origin);
-        redirectUrl.search = window.location.search;
-        redirectUrl.hash = window.location.hash;
+        // Mantener parámetros y hash
+        newUrl.search = window.location.search;
+        newUrl.hash = window.location.hash;
         
-        // Redirección definitiva
-        window.location.replace(redirectUrl.toString());
+        // Redirección inmediata
+        window.location.replace(newUrl.toString());
+      } else {
+        // Si ya está en la ruta correcta, cargar la app
+        window.location.replace('/' + repoName + '/');
       }
     </script>
   </head>
   <body>
     <p>Redireccionando a la aplicación...</p>
+    <noscript>
+      <p>Por favor habilita JavaScript o ve a <a href="/MVPProyectoTitulo/">la página principal</a></p>
+    </noscript>
   </body>
 </html>
