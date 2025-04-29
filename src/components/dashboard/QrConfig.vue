@@ -49,7 +49,6 @@ import { useAuthStore } from '@/stores/auth'
 
 const pb = new PocketBase('http://127.0.0.1:8090')
 const authStore = useAuthStore()
-const sucursalId = computed(() => authStore.currentSucursalId)
 
 const qrUrl = ref('')
 const estado = ref('desconectado')
@@ -59,10 +58,10 @@ const error = ref<string | null>(null)
 
 const estadoTexto = computed(() => {
   const estados: Record<string, string> = {
-    'esperando': 'Esperando escaneo',
-    'listo': 'Conectado',
-    'desconectado': 'Desconectado',
-    'reconectando': 'Reconectando'
+    esperando: 'Esperando escaneo',
+    listo: 'Conectado',
+    desconectado: 'Desconectado',
+    reconectando: 'Reconectando'
   }
   return estados[estado.value.toLowerCase()] || estado.value
 })
@@ -82,15 +81,13 @@ const updateVinculoData = (record: any) => {
 
 const loadVinculo = async () => {
   try {
-    if (!sucursalId.value) {
-      throw new Error('No se ha proporcionado un ID de sucursal válido')
-    }
+    const sucursalId = authStore.user?.sucursal_id
+    if (!sucursalId) throw new Error('No se ha proporcionado un ID de sucursal válido')
 
     isLoading.value = true
     error.value = null
 
-    // No necesitas authRefresh si ya estás autenticado en tu store
-    const vinculo = await pb.collection('vinculos_sucursal').getFirstListItem(`sucursal_id="${sucursalId.value}"`, {
+    const vinculo = await pb.collection('vinculos_sucursal').getFirstListItem(`sucursal_id="${sucursalId}"`, {
       expand: 'sucursal_id'
     })
     updateVinculoData(vinculo)
@@ -98,11 +95,10 @@ const loadVinculo = async () => {
   } catch (err: any) {
     console.error('❌ Error al cargar vínculo:', err)
 
-    if (err?.status === 404) {
-      error.value = 'No se encontró la configuración de WhatsApp para esta sucursal'
-    } else {
-      error.value = 'Error al cargar la configuración de WhatsApp'
-    }
+    error.value =
+      err?.status === 404
+        ? 'No se encontró la configuración de WhatsApp para esta sucursal'
+        : 'Error al cargar la configuración de WhatsApp'
 
     qrUrl.value = ''
     estado.value = 'desconectado'
@@ -112,9 +108,7 @@ const loadVinculo = async () => {
   }
 }
 
-onMounted(() => {
-  loadVinculo()
-})
+onMounted(loadVinculo)
 </script>
 
 <style scoped>

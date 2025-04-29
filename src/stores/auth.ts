@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { loginUser, logout, isLoggedIn, currentUser, type User } from '@/services/pocketbase'
+import { loginUser, logout as logoutService, isLoggedIn, currentUser, type User } from '@/services/pocketbase'
 
 // Extiende la interfaz User de PocketBase con campos adicionales
 interface AuthUser extends User {
@@ -22,7 +22,7 @@ export const useAuthStore = defineStore('auth', {
     loading: false,
     error: null as string | null
   }),
-  
+
   getters: {
     isAdmin(): boolean {
       return this.RolUsuario === 'admin'
@@ -30,17 +30,16 @@ export const useAuthStore = defineStore('auth', {
     currentSucursalId(): string | null {
       return this.sucursalId
     },
-    // Getter para obtener el nombre de la sucursal si está expandido
     sucursalNombre(): string | null {
       return this.user?.expand?.sucursal_id?.nombre || null
     }
   },
-  
+
   actions: {
     async login(email: string, password: string) {
       this.loading = true
       this.error = null
-      
+
       try {
         const authData = await loginUser(email, password)
         this.isAuthenticated = isLoggedIn()
@@ -50,12 +49,12 @@ export const useAuthStore = defineStore('auth', {
       } catch (err) {
         console.error('Login error:', err)
         this.error = err instanceof Error ? err.message : 'Credenciales incorrectas'
-        throw err // Re-lanzar el error para manejo en componentes
+        throw err
       } finally {
         this.loading = false
       }
     },
-    
+
     async checkAuth() {
       try {
         this.isAuthenticated = isLoggedIn()
@@ -70,7 +69,7 @@ export const useAuthStore = defineStore('auth', {
         return false
       }
     },
-    
+
     updateUserData() {
       if (!this.user) {
         this.RolUsuario = null
@@ -78,37 +77,26 @@ export const useAuthStore = defineStore('auth', {
         return
       }
 
-      // Manejo del rol
-      this.RolUsuario = this.user.rol || 
-                       (this.user.isAdmin ? 'admin' : 'user') || 
-                       null
-
-      // Manejo de la sucursal (directa o relación expandida)
-      this.sucursalId = this.user.sucursal_id || 
-                        this.user.expand?.sucursal_id?.id || 
-                        null
+      this.RolUsuario = this.user.rol || null
+      this.sucursalId =
+        this.user.sucursal_id ||
+        this.user.expand?.sucursal_id?.id ||
+        null
     },
-    
+
     async logout() {
       try {
-        await logout()
-        this.$reset() // Resetea todo el estado
+        await logoutService()
+        this.$reset()
       } catch (err) {
         console.error('Logout error:', err)
         throw err
       }
     }
   },
-  
+
   persist: {
-    key: 'auth-store', // Clave única para localStorage
-    paths: [
-      'user', 
-      'isAuthenticated', 
-      'RolUsuario', 
-      'sucursalId'
-    ],
-    // Opcional: Usar sessionStorage en lugar de localStorage
-    // storage: sessionStorage
+    key: 'auth-store',
+    paths: ['user', 'isAuthenticated', 'RolUsuario', 'sucursalId']
   }
 })

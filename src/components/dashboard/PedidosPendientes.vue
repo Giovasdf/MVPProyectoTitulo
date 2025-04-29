@@ -50,8 +50,10 @@ import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import PocketBase from 'pocketbase'
 import PedidoDetalleModal from './PedidoDetalleModal.vue'
 import CambiarEstadoModal from './CambiarEstadoModal.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const pb = new PocketBase('http://127.0.0.1:8090')
+const authStore = useAuthStore()
 
 interface Producto {
   nombre_producto: string
@@ -68,7 +70,7 @@ interface Pedido {
   estado: string
 }
 
-// Estados
+// Estados y UI
 const pedidos = ref<Pedido[]>([])
 const modalDetalleVisible = ref(false)
 const modalEstadoVisible = ref(false)
@@ -103,7 +105,7 @@ const actualizarEstado = (nuevoEstado: string) => {
   if (index !== -1) pedidos.value[index].estado = nuevoEstado
 }
 
-// Función para mapear los datos del pedido
+// Mapea un pedido con sus productos
 const mapPedidoData = async (record: any): Promise<Pedido> => {
   const productos = await pb.collection('productos_pedido').getFullList({
     filter: `pedido_id="${record.id}"`
@@ -125,15 +127,16 @@ const mapPedidoData = async (record: any): Promise<Pedido> => {
   }
 }
 
-// Cargar pedidos iniciales
 const fetchPedidos = async () => {
   try {
+    if (!authStore.sucursalId) return
+
     const result = await pb.collection('pedidos').getFullList({
-      sort: '-created'
+      sort: '-created',
+      filter: `sucursal_id="${authStore.sucursalId}"`
     })
 
-    const pedidosConItems = await Promise.all(result.map(mapPedidoData))
-    pedidos.value = pedidosConItems
+    pedidos.value = await Promise.all(result.map(mapPedidoData))
   } catch (error) {
     console.error('❌ Error al cargar pedidos:', error)
   }
@@ -141,9 +144,12 @@ const fetchPedidos = async () => {
 
 // Realtime
 const setupRealtime = () => {
-  pb.collection('pedidos').subscribe('*', async (e) => {
-    console.log('📦 Realtime evento:', e.action, e.record)
+  if (!authStore.sucursalId) return
 
+  pb.collection('pedidos').subscribe('*', async (e) => {
+    if (e.record.sucursal_id !== authStore.sucursalId) return
+
+    console.log('📦 Realtime evento:', e.action, e.record)
     const nuevoPedido = await mapPedidoData(e.record)
     const index = pedidos.value.findIndex(p => p.id === nuevoPedido.id)
 
@@ -167,6 +173,7 @@ const cleanupRealtime = () => {
 }
 
 onMounted(async () => {
+  await authStore.checkAuth()
   await fetchPedidos()
   setupRealtime()
 })
@@ -175,6 +182,7 @@ onBeforeUnmount(() => {
   cleanupRealtime()
 })
 </script>
+
 
 <style scoped>
 .text-header {

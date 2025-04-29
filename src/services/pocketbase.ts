@@ -1,6 +1,6 @@
 import PocketBase from 'pocketbase'
 
-const PB_URL = 'http://127.0.0.1:8090'
+const PB_URL = 'https://database-mvp-production.up.railway.app'
 export const pb = new PocketBase(PB_URL)
 
 // Tipos para TypeScript
@@ -17,9 +17,9 @@ export interface User {
 export async function loginUser(email: string, password: string) {
   try {
     const authData = await pb.collection('users').authWithPassword(
-      email, 
+      email,
       password,
-      { expand: 'sucursal_id' } // Opcional: expandir la relación
+      { expand: 'sucursal_id' }
     )
     return authData
   } catch (err) {
@@ -28,23 +28,22 @@ export async function loginUser(email: string, password: string) {
   }
 }
 
-
 // Verificar estado de autenticación
-export function isLoggedIn() {
+export function isLoggedIn(): boolean {
   return pb.authStore.isValid
 }
 
 // Obtener usuario actual
-export function currentUser() {
-  return pb.authStore.model
+export function currentUser(): User | null {
+  return pb.authStore.model as User | null
 }
 
 // Cerrar sesión
-export function logout() {
+export function logout(): void {
   pb.authStore.clear()
 }
 
-// Resto de tus funciones (getPedidos, updatePedidoStatus, etc.)
+// Obtener lista de pedidos
 export async function getPedidos() {
   try {
     const records = await pb.collection('orders').getFullList({
@@ -57,7 +56,8 @@ export async function getPedidos() {
   }
 }
 
-export async function updatePedidoStatus(id, status) {
+// Actualizar estado de un pedido
+export async function updatePedidoStatus(id: string, status: string) {
   try {
     const record = await pb.collection('orders').update(id, { status })
     return record

@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 const authStore = useAuthStore()
 
 onMounted(() => {
-  authStore.checkAuth() // Verifica la autenticación al cargar la app
+  authStore.checkAuth()
 })
 </script>
 

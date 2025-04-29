@@ -15,33 +15,35 @@
         <h3>Entregados</h3>
         <p>{{ entregados }}</p>
       </div>
-      <div class="kpi-card" v-if="userStore.user?.rol === 'admin'">
+      <div class="kpi-card" v-if="authStore.user?.rol === 'admin'">
         <h3>Sucursales Activas</h3>
         <p>{{ sucursalesActivas }}</p>
       </div>
     </div>
+
+    <p v-if="error" class="error-msg">{{ error }}</p>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { pb } from '@/services/pocketbase' // Importación corregida
+import { pb } from '@/services/pocketbase'
 
 const authStore = useAuthStore()
-const userStore = useAuthStore()
 
 const totalPedidos = ref(0)
 const pendientes = ref(0)
 const entregados = ref(0)
 const sucursalesActivas = ref(0)
+const error = ref('')
 
 const cargarKpis = async () => {
   try {
-    const filter = userStore.user?.rol === 'admin' 
+    const filter = authStore.user?.rol === 'admin' 
       ? '' 
-      : `sucursal_id = "${userStore.user?.sucursal_id}"`
-    
+      : `sucursal_id = "${authStore.user?.sucursal_id}"`
+
     const pedidos = await pb.collection('pedidos').getFullList({ 
       sort: '-created',
       filter
@@ -51,17 +53,24 @@ const cargarKpis = async () => {
     pendientes.value = pedidos.filter(p => p.estado === 'pendiente').length
     entregados.value = pedidos.filter(p => p.estado === 'entregado').length
 
-    if (userStore.user?.rol === 'admin') {
+    if (authStore.user?.rol === 'admin') {
       const sucursales = await pb.collection('sucursales').getFullList()
       sucursalesActivas.value = sucursales.length
     }
   } catch (err) {
     console.error('Error al cargar KPIs:', err)
+    error.value = 'No se pudo cargar el panel'
   }
 }
 
-onMounted(() => {
-  authStore.checkAuth().then(cargarKpis)
+onMounted(async () => {
+  try {
+    await authStore.checkAuth()
+    await cargarKpis()
+  } catch (e) {
+    error.value = 'No se pudo verificar autenticación'
+    console.error(e)
+  }
 })
 </script>
 
@@ -103,6 +112,12 @@ onMounted(() => {
   font-size: 1.75rem;
   font-weight: bold;
   color: #333;
+}
+
+.error-msg {
+  margin-top: 1rem;
+  color: #e74c3c;
+  font-weight: 600;
 }
 
 @media (max-width: 768px) {
