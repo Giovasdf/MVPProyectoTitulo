@@ -1,15 +1,29 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8">
     <title>Redireccionando...</title>
     <script>
-      // Reemplaza correctamente la ruta base sin agregar barras adicionales
-      const pathname = location.pathname.replace(/^\/MVPProyectoTitulo\/?/, ''); // Asegurarse de que no haya barras extra
-      location.replace('/MVPProyectoTitulo/' + pathname + location.search + location.hash);
+      const repoName = 'MVPProyectoTitulo';
+      const currentPath = window.location.pathname;
+      
+      // Verificar si ya está en la ruta correcta
+      if (!currentPath.startsWith(`/${repoName}/`)) {
+        const newPath = currentPath.startsWith('/') 
+          ? `/${repoName}${currentPath}`
+          : `/${repoName}/${currentPath}`;
+        
+        // Mantener query params y hash
+        const redirectUrl = new URL(newPath, window.location.origin);
+        redirectUrl.search = window.location.search;
+        redirectUrl.hash = window.location.hash;
+        
+        // Redirección definitiva
+        window.location.replace(redirectUrl.toString());
+      }
     </script>
   </head>
   <body>
-    <p>Redireccionando...</p>
+    <p>Redireccionando a la aplicación...</p>
   </body>
 </html>
