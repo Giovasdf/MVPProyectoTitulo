@@ -40,13 +40,11 @@ const error = ref('')
 
 const cargarKpis = async () => {
   try {
-    const filter = authStore.user?.rol === 'admin' 
-      ? '' 
-      : `sucursal_id = "${authStore.user?.sucursal_id}"`
+ 
 
     const pedidos = await pb.collection('pedidos').getFullList({ 
       sort: '-created',
-      filter
+   
     })
 
     totalPedidos.value = pedidos.length

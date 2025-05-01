@@ -3,24 +3,19 @@
     <div class="footer-container">
       <!-- Logo + Marca -->
       <div class="footer-brand">
-        <img src="@/assets/img/LogoMediBot2.png" alt="Logo MediBot" class="footer-logo" />
-        <span class="brand-text">MediBot</span>
+        <router-link to="/" class="brand-link">
+          <img src="@/assets/img/LogoMediBot2.png" alt="Logo MediBot" class="footer-logo" />
+          <span class="brand-text">MediBot</span>
+        </router-link>
       </div>
 
       <!-- Enlaces principales con scroll -->
       <div class="footer-links">
-        <a href="#hero" @click.prevent="scrollTo('hero')">Inicio</a>
-        <a href="#why-us" @click.prevent="scrollTo('why-us')">¿Por qué elegirnos?</a>
-        <a href="#features-section" @click.prevent="scrollTo('features-section')">Ventajas</a>
-        <a href="#how-works" @click.prevent="scrollTo('how-works')">¿Cómo funciona?</a>
-        <a href="#contact" @click.prevent="scrollTo('contact')">Contacto</a>
-      </div>
-
-      <!-- Enlaces sociales opcionales -->
-      <div class="footer-social">
-        <a href="https://facebook.com" target="_blank" rel="noopener">📘</a>
-        <a href="https://instagram.com" target="_blank" rel="noopener">📸</a>
-        <a href="https://twitter.com" target="_blank" rel="noopener">🐦</a>
+        <a href="#" @click.prevent="handleFooterLink('hero')">Inicio</a>
+        <a href="#" @click.prevent="handleFooterLink('why-us')">¿Por qué elegirnos?</a>
+        <a href="#" @click.prevent="handleFooterLink('features-section')">Ventajas</a>
+        <a href="#" @click.prevent="handleFooterLink('how-works')">¿Cómo funciona?</a>
+        <a href="#" @click.prevent="handleFooterLink('contact')">Contacto</a>
       </div>
 
       <!-- Copyright -->
@@ -32,10 +27,33 @@
 </template>
 
 <script setup lang="ts">
-const scrollTo = (id: string) => {
+import { useRouter, useRoute } from 'vue-router'
+
+const router = useRouter()
+const route = useRoute()
+
+const handleFooterLink = (sectionId: string) => {
+  if (route.path !== '/') {
+    // Si no estamos en la página de inicio, navegamos primero
+    router.push('/').then(() => {
+      // Usamos setTimeout para asegurarnos que la página ha cargado
+      setTimeout(() => {
+        scrollToSection(sectionId)
+      }, 100)
+    })
+  } else {
+    // Si ya estamos en la página de inicio, hacemos scroll directamente
+    scrollToSection(sectionId)
+  }
+}
+
+const scrollToSection = (id: string) => {
   const el = document.getElementById(id)
   if (el) {
     el.scrollIntoView({ behavior: 'smooth' })
+    
+    // Actualizar la URL sin recargar la página
+    history.pushState(null, '', `#${id}`)
   }
 }
 </script>
@@ -60,6 +78,13 @@ const scrollTo = (id: string) => {
   font-weight: 700;
   font-size: 1.5rem;
   margin-bottom: 1rem;
+}
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: white;
 }
 
 .footer-logo {
@@ -92,23 +117,24 @@ const scrollTo = (id: string) => {
   color: #dfefff;
 }
 
-.footer-social {
-  margin-bottom: 1rem;
-}
-
-.footer-social a {
-  font-size: 1.5rem;
-  margin: 0 0.5rem;
-  color: white;
-  transition: color 0.3s ease;
-}
-
-.footer-social a:hover {
-  color: #dfefff;
-}
-
 .footer-copy {
   font-size: 0.9rem;
   color: #e0e0e0;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+  .footer-links {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .footer-brand {
+    margin-bottom: 1.5rem;
+  }
+  
+  .footer-copy {
+    margin-top: 1.5rem;
+  }
 }
 </style>

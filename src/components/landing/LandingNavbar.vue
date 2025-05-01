@@ -2,21 +2,21 @@
   <nav class="landing-navbar">
     <div class="navbar-container">
       <!-- Logo + texto -->
-      <a href="/" class="navbar-brand">
+      <router-link to="/" class="navbar-brand">
         <img src="@/assets/img/LogoMediBot2.png" alt="Logo MediBot" class="brand-logo" />
-      </a>
+      </router-link>
 
       <!-- Menú de navegación versión Desktop -->
       <ul class="navbar-links desktop">
-        <li><a href="#hero" @click.prevent="scrollTo('hero')">Inicio</a></li>
-        <li><a href="#why-us" @click.prevent="scrollTo('why-us')">¿Por qué elegirnos?</a></li>
-        <li><a href="#features-section" @click.prevent="scrollTo('features-section')">Ventajas</a></li>
-        <li><a href="#how-works" @click.prevent="scrollTo('how-works')">¿Cómo funciona?</a></li>
-        <li><a href="#contact" @click.prevent="scrollTo('contact')">Contacto</a></li>
+        <li><a href="#" @click.prevent="handleNavClick('hero')">Inicio</a></li>
+        <li><a href="#" @click.prevent="handleNavClick('why-us')">¿Por qué elegirnos?</a></li>
+        <li><a href="#" @click.prevent="handleNavClick('features-section')">Ventajas</a></li>
+        <li><a href="#" @click.prevent="handleNavClick('how-works')">¿Cómo funciona?</a></li>
+        <li><a href="#" @click.prevent="handleNavClick('contact')">Contacto</a></li>
       </ul>
 
       <!-- Botón de login versión Desktop -->
-      <a href="/login" class="login-button desktop">Iniciar sesión</a>
+      <router-link :to="{ name: 'login' }" class="login-button desktop">Iniciar sesión</router-link>
 
       <!-- Botón Hamburger versión Mobile -->
       <button class="hamburger mobile" @click="toggleMobileMenu">
@@ -27,11 +27,11 @@
     <!-- Menú Mobile -->
     <div v-if="menuOpen" class="mobile-menu mobile">
       <ul>
-        <li><a href="#hero" @click.prevent="mobileLink('hero')">Inicio</a></li>
-        <li><a href="#why-us" @click.prevent="mobileLink('why-us')">¿Por qué elegirnos?</a></li>
-        <li><a href="#features-section" @click.prevent="mobileLink('features-section')">Ventajas</a></li>
-        <li><a href="#how-works" @click.prevent="mobileLink('how-works')">¿Cómo funciona?</a></li>
-        <li><a href="#contact" @click.prevent="mobileLink('contact')">Contacto</a></li>
+        <li><a href="#" @click.prevent="handleMobileNavClick('hero')">Inicio</a></li>
+        <li><a href="#" @click.prevent="handleMobileNavClick('why-us')">¿Por qué elegirnos?</a></li>
+        <li><a href="#" @click.prevent="handleMobileNavClick('features-section')">Ventajas</a></li>
+        <li><a href="#" @click.prevent="handleMobileNavClick('how-works')">¿Cómo funciona?</a></li>
+        <li><a href="#" @click.prevent="handleMobileNavClick('contact')">Contacto</a></li>
         <li>
           <router-link :to="{ name: 'login' }" class="mobile-login" @click="toggleMobileMenu">
             Iniciar sesión
@@ -44,28 +44,49 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
+const router = useRouter()
+const route = useRoute()
 const menuOpen = ref(false)
 
 const toggleMobileMenu = () => {
   menuOpen.value = !menuOpen.value
 }
 
-const scrollTo = (id: string) => {
-  const el = document.getElementById(id)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' })
+const handleNavClick = (sectionId: string) => {
+  if (route.path !== '/') {
+    // Si no estamos en la página de inicio, navegamos primero
+    router.push('/').then(() => {
+      // Usamos setTimeout para asegurarnos que la página ha cargado
+      setTimeout(() => {
+        scrollToSection(sectionId)
+      }, 100)
+    })
+  } else {
+    // Si ya estamos en la página de inicio, hacemos scroll directamente
+    scrollToSection(sectionId)
   }
 }
 
-const mobileLink = (id: string) => {
-  scrollTo(id)
-  menuOpen.value = false
+const handleMobileNavClick = (sectionId: string) => {
+  toggleMobileMenu()
+  handleNavClick(sectionId)
+}
+
+const scrollToSection = (id: string) => {
+  const el = document.getElementById(id)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+    
+    // Actualizar la URL sin recargar la página
+    history.pushState(null, '', `#${id}`)
+  }
 }
 </script>
 
 <style scoped>
-/* Barra principal */
+/* Tus estilos existentes se mantienen igual */
 .landing-navbar {
   background-color: #2B6DFC;
   border-bottom: 1px solid #2B6DFC;
@@ -76,7 +97,6 @@ const mobileLink = (id: string) => {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Contenedor interno */
 .navbar-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -86,7 +106,6 @@ const mobileLink = (id: string) => {
   align-items: center;
 }
 
-/* Logo y texto */
 .navbar-brand {
   display: flex;
   align-items: center;
@@ -98,14 +117,6 @@ const mobileLink = (id: string) => {
   width: auto;
 }
 
-.brand-name {
-  margin-left: 0.5rem;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #d9d9d9;
-}
-
-/* Enlaces Desktop */
 .navbar-links {
   list-style: none;
   display: flex;
@@ -127,7 +138,6 @@ const mobileLink = (id: string) => {
   text-decoration: underline;
 }
 
-/* Botón login Desktop */
 .login-button {
   margin-left: 1.5rem;
   padding: 0.5rem 1.25rem;
@@ -145,7 +155,6 @@ const mobileLink = (id: string) => {
   color: #2B6DFC;
 }
 
-/* Hamburger Mobile */
 .hamburger {
   background: none;
   border: none;
@@ -181,7 +190,6 @@ const mobileLink = (id: string) => {
   top: 6px;
 }
 
-/* Menú Mobile */
 .mobile-menu {
   background-color: #2B6DFC;
   position: absolute;
@@ -211,7 +219,6 @@ const mobileLink = (id: string) => {
   display: block;
 }
 
-/* Botón login Mobile */
 .mobile-login {
   display: block;
   margin-top: 0.5rem;
@@ -230,7 +237,6 @@ const mobileLink = (id: string) => {
   color: #2B6DFC;
 }
 
-/* Responsive helpers */
 .desktop {
   display: flex;
 }
