@@ -1,25 +1,29 @@
 <template>
   <footer class="landing-footer">
     <div class="footer-container">
+      <!-- Logo + Marca -->
       <div class="footer-brand">
-        🤖 <span class="brand-text">MediBot</span>
+        <img src="@/assets/img/LogoMediBot2.png" alt="Logo MediBot" class="footer-logo" />
+        <span class="brand-text">MediBot</span>
       </div>
 
+      <!-- Enlaces principales con scroll -->
       <div class="footer-links">
-        <a href="#features">Características</a>
-        <a href="#como-funciona">Cómo funciona</a>
-        <a href="#contact">Contacto</a>
+        <a href="#hero" @click.prevent="scrollTo('hero')">Inicio</a>
+        <a href="#why-us" @click.prevent="scrollTo('why-us')">¿Por qué elegirnos?</a>
+        <a href="#features-section" @click.prevent="scrollTo('features-section')">Ventajas</a>
+        <a href="#how-works" @click.prevent="scrollTo('how-works')">¿Cómo funciona?</a>
+        <a href="#contact" @click.prevent="scrollTo('contact')">Contacto</a>
       </div>
 
-      <!-- Íconos sociales opcionales -->
-      <!--
+      <!-- Enlaces sociales opcionales -->
       <div class="footer-social">
-        <a href="#"><i class="fab fa-facebook-f"></i></a>
-        <a href="#"><i class="fab fa-instagram"></i></a>
-        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+        <a href="https://facebook.com" target="_blank" rel="noopener">📘</a>
+        <a href="https://instagram.com" target="_blank" rel="noopener">📸</a>
+        <a href="https://twitter.com" target="_blank" rel="noopener">🐦</a>
       </div>
-      -->
 
+      <!-- Copyright -->
       <div class="footer-copy">
         © {{ new Date().getFullYear() }} MediBot. Todos los derechos reservados.
       </div>
@@ -28,12 +32,17 @@
 </template>
 
 <script setup lang="ts">
-// No se requiere lógica compleja
+const scrollTo = (id: string) => {
+  const el = document.getElementById(id)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+  }
+}
 </script>
 
 <style scoped>
 .landing-footer {
-  background-color: #2b6dfc;
+  background-color: #2B6DFC;
   color: white;
   padding: 2rem 1rem;
   text-align: center;
@@ -45,31 +54,37 @@
 }
 
 .footer-brand {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
   display: flex;
   justify-content: center;
   align-items: center;
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.footer-logo {
+  height: 40px;
+  margin-right: 0.5rem;
 }
 
 .brand-text {
-  margin-left: 0.5rem;
+  font-size: 1.5rem;
 }
 
 .footer-links {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 1.25rem;
   margin-bottom: 1rem;
 }
 
 .footer-links a {
-  color: #ffffff;
+  color: white;
   text-decoration: none;
   font-weight: 500;
-  transition: color 0.3s;
+  transition: color 0.3s ease;
+  cursor: pointer;
 }
 
 .footer-links a:hover {
@@ -82,10 +97,10 @@
 }
 
 .footer-social a {
-  color: white;
+  font-size: 1.5rem;
   margin: 0 0.5rem;
-  font-size: 1.2rem;
-  transition: color 0.3s;
+  color: white;
+  transition: color 0.3s ease;
 }
 
 .footer-social a:hover {
@@ -95,6 +110,5 @@
 .footer-copy {
   font-size: 0.9rem;
   color: #e0e0e0;
-  margin-top: 1rem;
 }
 </style>

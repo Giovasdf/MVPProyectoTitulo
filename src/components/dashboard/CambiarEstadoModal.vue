@@ -4,7 +4,7 @@
       <h3>Cambiar estado del pedido</h3>
       <select v-model="estadoSeleccionado" class="select-estado">
         <option value="pendiente">Pendiente</option>
-        <option value="preparado">Preparado</option>
+        <option value="preparando">Preparando</option>
         <option value="entregado">Entregado</option>
       </select>
       <div style="margin-top: 1rem">
@@ -16,7 +16,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import PocketBase from 'pocketbase'
 
 const pb = new PocketBase('https://database-mvp-production.up.railway.app')
@@ -35,27 +35,40 @@ const estadoSeleccionado = ref(props.estadoActual)
 
 const guardar = async () => {
   try {
-    // Validación adicional para asegurar que el estado es válido
-    const estadosValidos = ['pendiente', 'preparado', 'entregado']
+    // Verificar autenticación
+    if (!pb.authStore.isValid) {
+      throw new Error('Debes iniciar sesión para realizar esta acción')
+    }
+
+    // Validar estado
+    const estadosValidos = ['pendiente', 'preparando', 'entregado']
     if (!estadosValidos.includes(estadoSeleccionado.value)) {
       throw new Error('Estado no válido')
     }
 
+    // Preparar datos
     const data = {
-      estado: estadoSeleccionado.value
+      estado: estadoSeleccionado.value,
+      updated: new Date().toISOString()
     }
 
-    await pb.collection('pedidos').update(props.pedidoId, data)
+    console.log('Intentando actualizar con:', { id: props.pedidoId, data })
     
+    // Enviar actualización
+    const record = await pb.collection('pedidos').update(props.pedidoId, data)
+    console.log('Actualización exitosa:', record)
+    
+    // Emitir eventos
     emit('estadoActualizado', estadoSeleccionado.value)
     emit('cerrar')
   } catch (error) {
-    console.error('Error actualizando estado:', error)
-    alert(`No se pudo actualizar el estado: ${error.message}`)
+    console.error('Error completo:', error)
+    alert(`Error al actualizar el estado: ${error.message}`)
   }
 }
 </script>
 
+<!-- Tus estilos se mantienen igual -->
 <style scoped>
 .modal-overlay {
   position: fixed;
@@ -88,7 +101,8 @@ const guardar = async () => {
   font-size: 1rem;
 }
 
-.btn-guardar, .btn-cerrar {
+.btn-guardar,
+.btn-cerrar {
   padding: 0.5rem 1rem;
   margin: 0.5rem;
   border: none;
