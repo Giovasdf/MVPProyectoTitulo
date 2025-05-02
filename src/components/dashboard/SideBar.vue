@@ -82,12 +82,6 @@ const items = [
     icon: 'fas fa-users-cog',
     requiresAdmin: true
   },
-  { 
-    section: 'configuracion', 
-    label: 'Configuración', 
-    icon: 'fas fa-cog',
-    requiresAdmin: true
-  },
 ];
 
 // Filtra los elementos del menú según el rol del usuario

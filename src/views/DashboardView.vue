@@ -26,14 +26,12 @@ import Dashboard from '@/components/dashboard/Dashboard.vue'
 import PedidosPendientes from '@/components/dashboard/PedidosPendientes.vue'
 import SucursalesAdmin from '@/components/dashboard/SucursalesAdmin.vue'
 import UsuariosAdmin from '@/components/dashboard/UsuariosAdmin.vue'
-import QrConfig from '@/components/dashboard/QrConfig.vue'
 
 type DashboardSection = 
   | 'dashboard' 
   | 'pedidos' 
   | 'sucursales' 
   | 'usuarios' 
-  | 'configuracion'
 
 const sidebarVisible = ref(true)
 const currentSection = ref<DashboardSection>('dashboard')
@@ -44,8 +42,7 @@ const sectionComponents = {
   dashboard: Dashboard,
   pedidos: PedidosPendientes,
   sucursales: SucursalesAdmin,
-  usuarios: UsuariosAdmin,
-  configuracion: QrConfig
+  usuarios: UsuariosAdmin
 } as const
 
 const currentComponent = computed(() => {
