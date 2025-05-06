@@ -4,23 +4,18 @@
     <meta charset="utf-8">
     <title>Redireccionando...</title>
     <script>
-      // Verificar si estamos en la ruta correcta
       const repoName = 'MVPProyectoTitulo';
       const currentPath = window.location.pathname;
       
       if (!currentPath.includes(repoName)) {
-        // Construir nueva URL
         const newPath = `/${repoName}${currentPath.startsWith('/') ? '' : '/'}${currentPath}`;
         const newUrl = new URL(newPath, window.location.origin);
         
-        // Mantener parámetros y hash
         newUrl.search = window.location.search;
         newUrl.hash = window.location.hash;
         
-        // Redirección inmediata
         window.location.replace(newUrl.toString());
       } else {
-        // Si ya está en la ruta correcta, cargar la app
         window.location.replace('/' + repoName + '/');
       }
     </script>
