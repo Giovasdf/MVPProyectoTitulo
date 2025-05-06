@@ -8,14 +8,11 @@
 import { ref, onMounted, watch, type PropType } from 'vue'
 import { Chart, type ChartItem, type ChartData, type ChartOptions } from 'chart.js/auto'
 
-// Define la interfaz para los pedidos
 interface Pedido {
   id: string
   created: string | Date
-  // Agrega otras propiedades necesarias
 }
 
-// Props con tipado fuerte
 const props = defineProps({
   pedidos: {
     type: Array as PropType<Pedido[]>,
@@ -27,7 +24,6 @@ const props = defineProps({
 const chartCanvas = ref<HTMLCanvasElement | null>(null)
 const chartInstance = ref<Chart<'line'> | null>(null)
 
-// Prepara los datos para el gráfico
 const prepareChartData = (): ChartData<'line'> => {
   const ordersByDay: Record<string, number> = {}
 
@@ -50,7 +46,6 @@ const prepareChartData = (): ChartData<'line'> => {
   }
 }
 
-// Opciones del gráfico
 const chartOptions: ChartOptions<'line'> = {
   responsive: true,
   maintainAspectRatio: false,
@@ -85,16 +80,13 @@ const chartOptions: ChartOptions<'line'> = {
   }
 }
 
-// Inicializa o actualiza el gráfico
 const initChart = () => {
   if (!chartCanvas.value) return
 
-  // Destruir instancia anterior si existe
   if (chartInstance.value) {
     chartInstance.value.destroy()
   }
 
-  // Crear nueva instancia del gráfico
   chartInstance.value = new Chart(
     chartCanvas.value as ChartItem,
     {

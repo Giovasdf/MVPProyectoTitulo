@@ -34,7 +34,7 @@
       <span class="badge estado-entregado">{{ entregados.length }} Entregados</span>
     </div>
 
-    <div class="pedidos-list">
+    <div class="pedidos-list" data-testid="lista-pedidos">
       <div v-for="pedido in pedidosFiltrados" :key="pedido.id" class="pedido-card">
         <div class="pedido-info">
           <span class="pedido-id">#{{ pedido.id }}</span>

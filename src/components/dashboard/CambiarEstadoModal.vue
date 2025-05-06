@@ -1,19 +1,21 @@
 <template>
-  <div class="modal-overlay">
-    <div class="modal-content">
+  <div class="modal-overlay" data-cy="modal-overlay">
+    <div class="modal-content" data-cy="modal-content">
       <h3>Cambiar estado del pedido</h3>
-      <select v-model="estadoSeleccionado" class="select-estado">
+      <select v-model="estadoSeleccionado" class="select-estado" data-cy="select-estado">
         <option value="pendiente">Pendiente</option>
         <option value="preparando">Preparando</option>
         <option value="entregado">Entregado</option>
       </select>
       <div style="margin-top: 1rem">
-        <button class="btn-guardar" @click="guardar">Guardar</button>
-        <button class="btn-cerrar" @click="$emit('cerrar')">Cancelar</button>
+        <button class="btn-guardar" @click="guardar" data-cy="btn-guardar">Guardar</button>
+        <button class="btn-cerrar" @click="$emit('cerrar')" data-cy="btn-cerrar">Cancelar</button>
       </div>
     </div>
   </div>
 </template>
+
+
 
 <script lang="ts" setup>
 import { ref } from 'vue'
@@ -35,18 +37,15 @@ const estadoSeleccionado = ref(props.estadoActual)
 
 const guardar = async () => {
   try {
-    // Verificar autenticación
     if (!pb.authStore.isValid) {
       throw new Error('Debes iniciar sesión para realizar esta acción')
     }
 
-    // Validar estado
     const estadosValidos = ['pendiente', 'preparando', 'entregado']
     if (!estadosValidos.includes(estadoSeleccionado.value)) {
       throw new Error('Estado no válido')
     }
 
-    // Preparar datos
     const data = {
       estado: estadoSeleccionado.value,
       updated: new Date().toISOString()
@@ -54,11 +53,9 @@ const guardar = async () => {
 
     console.log('Intentando actualizar con:', { id: props.pedidoId, data })
     
-    // Enviar actualización
     const record = await pb.collection('pedidos').update(props.pedidoId, data)
     console.log('Actualización exitosa:', record)
     
-    // Emitir eventos
     emit('estadoActualizado', estadoSeleccionado.value)
     emit('cerrar')
   } catch (error) {

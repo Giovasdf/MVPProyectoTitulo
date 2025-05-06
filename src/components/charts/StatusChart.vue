@@ -39,8 +39,8 @@ export default {
         datasets: [{
           data: [statusCount.completed, statusCount.pending],
           backgroundColor: [
-            'rgba(40, 167, 69, 0.7)',  // Verde para completados
-            'rgba(255, 193, 7, 0.7)'   // Amarillo para pendientes
+            'rgba(40, 167, 69, 0.7)',  
+            'rgba(255, 193, 7, 0.7)'   
           ],
           borderColor: [
             'rgba(40, 167, 69, 1)',

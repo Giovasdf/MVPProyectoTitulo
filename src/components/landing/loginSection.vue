@@ -14,11 +14,13 @@
             v-model="email" 
             type="email" 
             placeholder="Correo electrónico" 
+            name="email"
             required 
           />
           <input 
             v-model="password" 
             type="password" 
+            name="password"
             placeholder="Contraseña" 
             required 
           />

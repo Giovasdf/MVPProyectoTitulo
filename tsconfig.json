@@ -15,14 +15,18 @@
       ]
     },
     "types": [
-      "vite/client"
+      "vite/client",
+      "cypress"
+
     ]
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.tsx",
-    "src/**/*.vue"
+    "src/**/*.vue",
+    "cypress/**/*.ts"  
+
   ],
   "exclude": [
     "node_modules",
