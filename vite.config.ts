@@ -19,8 +19,16 @@ export default defineConfig(({ mode }) => ({
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
       },
       output: {
-        manualChunks: undefined, // 👈 esto evita múltiples archivos .js
+        manualChunks: undefined,
       },
+    },
+  },
+
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
 }))

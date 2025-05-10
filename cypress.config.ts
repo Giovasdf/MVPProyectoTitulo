@@ -1,17 +1,17 @@
 import { defineConfig } from "cypress";
-import mochawesome from "mochawesome";
 
 export default defineConfig({
-  projectId: "o4po9t",
-  
-  // Habilitar grabación de videos (nivel raíz)
+  projectId: 'o4po9t',
   video: true,
-  videoCompression: 32, // Opcional: compresión (1-51, menor = mejor calidad)
-  videosFolder: "cypress/videos", // Opcional: carpeta personalizada
+  videoCompression: 32,
+  videosFolder: "cypress/videos",
 
   e2e: {
+    baseUrl: 'http://localhost:5173', 
+
     setupNodeEvents(on, config) {
-      on("after:run", (results) => {});
+      on("after:run", (results) => {
+      });
 
       config.reporter = "mochawesome";
       config.reporterOptions = {
