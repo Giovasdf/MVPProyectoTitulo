@@ -12,11 +12,12 @@
       <div class="filtro-group">
         <label for="filtro-estado">Filtrar por estado:</label>
         <select id="filtro-estado" v-model="filtroEstado" @change="aplicarFiltros">
-          <option value="">Todos</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="preparando">Preparando</option>
-          <option value="entregado">Entregado</option>
-        </select>
+  <option value="">Todos</option>
+  <option value="pendiente">Pendiente</option>
+  <option value="preparado">Preparado</option>
+  <option value="entregado">Entregado</option>
+</select>
+
       </div>
 
       <div class="filtro-group">
@@ -30,7 +31,7 @@
 
     <div class="pedidos-header">
       <span class="badge estado-pendiente">{{ pendientes.length }} Pendientes</span>
-      <span class="badge estado-preparando">{{ preparando.length }} Preparando</span>
+      <span class="badge estado-preparado">{{ preparado.length }} Preparado</span>
       <span class="badge estado-entregado">{{ entregados.length }} Entregados</span>
     </div>
 
@@ -122,7 +123,7 @@ const todosLosPedidos = ref<Pedido[]>([])
 
 // Computed
 const pendientes = computed(() => pedidos.value.filter(p => p.estado === 'pendiente'))
-const preparando = computed(() => pedidos.value.filter(p => p.estado === 'preparando'))
+const preparado = computed(() => pedidos.value.filter(p => p.estado === 'preparado'))
 const entregados = computed(() => pedidos.value.filter(p => p.estado === 'entregado'))
 
 const pedidosFiltrados = computed(() => {
@@ -192,7 +193,7 @@ const aplicarFiltros = async () => {
         const pedido = await mapPedidoData(record as RecordPedido)
         pedidosProcesados.push(pedido)
       } catch (error) {
-        console.error(`Error preparando pedido ${record.id}:`, error)
+        console.error(`Error preparado pedido ${record.id}:`, error)
       }
     }
 
@@ -268,7 +269,7 @@ const fetchPedidos = async () => {
         const pedido = await mapPedidoData(record as RecordPedido)
         pedidosProcesados.push(pedido)
       } catch (error) {
-        console.error(`Error preparando pedido ${record.id}:`, error)
+        console.error(`Error preparado pedido ${record.id}:`, error)
       }
     }
 
@@ -309,7 +310,7 @@ const setupRealtime = () => {
           break
       }
     } catch (error) {
-      console.error('Error preparando evento realtime:', error)
+      console.error('Error preparado evento realtime:', error)
     }
   })
 }
@@ -377,7 +378,7 @@ onBeforeUnmount(() => {
   background: #e67e22;
 }
 
-.estado-preparando {
+.estado-preparado {
   background: #3498db;
 }
 

@@ -4,9 +4,10 @@
       <h3>Cambiar estado del pedido</h3>
       <select v-model="estadoSeleccionado" class="select-estado" data-cy="select-estado">
         <option value="pendiente">Pendiente</option>
-        <option value="preparando">Preparando</option>
+        <option value="preparado">Preparado</option>
         <option value="entregado">Entregado</option>
       </select>
+
       <div style="margin-top: 1rem">
         <button class="btn-guardar" @click="guardar" data-cy="btn-guardar">Guardar</button>
         <button class="btn-cerrar" @click="$emit('cerrar')" data-cy="btn-cerrar">Cancelar</button>
@@ -41,29 +42,45 @@ const guardar = async () => {
       throw new Error('Debes iniciar sesión para realizar esta acción')
     }
 
-    const estadosValidos = ['pendiente', 'preparando', 'entregado']
+    const estadosValidos = ['pendiente', 'preparado', 'entregado']
     if (!estadosValidos.includes(estadoSeleccionado.value)) {
       throw new Error('Estado no válido')
     }
 
+    // Obtener el registro actual para conservar los campos requeridos
+    const recordActual = await pb.collection('pedidos').getOne(props.pedidoId)
+
     const data = {
+      ...recordActual,
       estado: estadoSeleccionado.value,
       updated: new Date().toISOString()
     }
 
+    // Eliminar campos no permitidos por el API de PocketBase
+    delete data.id
+    delete data.created
+    delete data.collectionId
+    delete data.collectionName
+    delete data.expand
+
     console.log('Intentando actualizar con:', { id: props.pedidoId, data })
-    
+
     const record = await pb.collection('pedidos').update(props.pedidoId, data)
     console.log('Actualización exitosa:', record)
-    
+
     emit('estadoActualizado', estadoSeleccionado.value)
     emit('cerrar')
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error completo:', error)
     alert(`Error al actualizar el estado: ${error.message}`)
+
+    if (error.data) {
+      console.error('Detalles del error:', error.data)
+    }
   }
 }
 </script>
+
 
 <!-- Tus estilos se mantienen igual -->
 <style scoped>
