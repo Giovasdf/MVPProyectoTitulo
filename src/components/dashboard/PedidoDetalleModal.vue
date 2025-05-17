@@ -7,9 +7,8 @@
       <p><strong>Productos:</strong> {{ productos.length }}</p>
       <ul>
         <li v-for="(item, index) in productos" :key="index">
-          {{ item.cantidad }}x {{ item.producto }}
+          {{ item.cantidad }}x {{ item.producto }} - {{ item.observaciones }}
           <span v-if="item.dosis">({{ item.dosis }})</span>
-          <span v-if="item.requiereReceta"> - <strong>Requiere receta</strong></span>
         </li>
       </ul>
       <button class="btn-detalle" @click="$emit('cerrar')">Cerrar</button>
